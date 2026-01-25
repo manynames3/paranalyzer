@@ -9,6 +9,7 @@ export interface MarketData {
   priceChange: number;
   marketStrength: 'buyers' | 'balanced' | 'sellers';
   lastUpdated: string;
+  sources?: string[];
 }
 
 export interface SearchParams {
