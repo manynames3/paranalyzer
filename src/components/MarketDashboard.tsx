@@ -7,7 +7,8 @@ import {
   DollarSign, 
   TrendingUp, 
   Activity,
-  MapPin 
+  MapPin,
+  ExternalLink
 } from 'lucide-react';
 
 interface MarketDashboardProps {
@@ -113,10 +114,13 @@ export const MarketDashboard = ({ data }: MarketDashboardProps) => {
         </div>
       </div>
 
-      {/* Data Source Note */}
-      <p className="text-center text-xs text-muted-foreground/60 pt-4">
-        Demo data shown. Connect to Firecrawl for live data from Zillow, Redfin, and Realtor.com
-      </p>
+      {/* Data Sources */}
+      {data.sources && data.sources.length > 0 && (
+        <div className="flex items-center justify-center gap-2 pt-4 text-xs text-muted-foreground/80">
+          <ExternalLink className="w-3 h-3" />
+          <span>Data from: {data.sources.join(', ')}</span>
+        </div>
+      )}
     </div>
   );
 };

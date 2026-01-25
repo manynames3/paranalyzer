@@ -1,40 +1,6 @@
 import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { MarketData, getMarketStrength } from '@/types/market';
-
-// Demo data generator - in production, this would fetch from Firecrawl/APIs
-const generateDemoData = (query: string): MarketData => {
-  // Simulate different market conditions based on input
-  const hash = query.split('').reduce((a, b) => {
-    a = ((a << 5) - a) + b.charCodeAt(0);
-    return a & a;
-  }, 0);
-  
-  const activeListings = Math.abs(hash % 500) + 100;
-  const pendingRatio = (Math.abs(hash % 60) + 20) / 100;
-  const pendingListings = Math.floor(activeListings * pendingRatio);
-  const par = pendingListings / activeListings;
-  const avgDays = Math.abs(hash % 45) + 15;
-  const medianPrice = Math.abs(hash % 500000) + 250000;
-  const priceChange = ((hash % 20) - 5) / 100;
-
-  // Determine location type
-  const isZip = /^\d{5}$/.test(query.trim());
-  const isCounty = query.toLowerCase().includes('county');
-  const locationType = isZip ? 'zip' : isCounty ? 'county' : 'city';
-
-  return {
-    location: query,
-    locationType,
-    activeListings,
-    pendingListings,
-    par,
-    averageDaysOnMarket: avgDays,
-    medianPrice,
-    priceChange,
-    marketStrength: getMarketStrength(par),
-    lastUpdated: new Date().toISOString(),
-  };
-};
 
 export const useMarketData = () => {
   const [data, setData] = useState<MarketData | null>(null);
@@ -51,14 +17,46 @@ export const useMarketData = () => {
     setError(null);
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { data: result, error: fnError } = await supabase.functions.invoke('scrape-listings', {
+        body: { location: query.trim() },
+      });
+
+      if (fnError) {
+        console.error('Function error:', fnError);
+        setError('Failed to fetch market data. Please try again.');
+        return;
+      }
+
+      if (!result.success) {
+        setError(result.error || 'Could not retrieve data for this location.');
+        return;
+      }
+
+      const responseData = result.data;
       
-      const marketData = generateDemoData(query);
+      // Determine location type
+      const isZip = /^\d{5}$/.test(query.trim());
+      const isCounty = query.toLowerCase().includes('county');
+      const locationType = isZip ? 'zip' : isCounty ? 'county' : 'city';
+
+      const marketData: MarketData = {
+        location: responseData.location,
+        locationType,
+        activeListings: responseData.activeListings,
+        pendingListings: responseData.pendingListings,
+        par: responseData.par,
+        averageDaysOnMarket: responseData.averageDaysOnMarket,
+        medianPrice: responseData.medianPrice,
+        priceChange: responseData.priceChange,
+        marketStrength: getMarketStrength(responseData.par),
+        lastUpdated: responseData.lastUpdated,
+        sources: responseData.sources,
+      };
+
       setData(marketData);
     } catch (err) {
-      setError('Failed to fetch market data. Please try again.');
       console.error('Error fetching market data:', err);
+      setError('Failed to fetch market data. Please try again.');
     } finally {
       setIsLoading(false);
     }
