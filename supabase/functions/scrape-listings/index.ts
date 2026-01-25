@@ -27,96 +27,104 @@ interface ScrapeResult {
   error?: string;
 }
 
-// Extract numbers from text
-const extractNumber = (text: string, patterns: RegExp[]): number | null => {
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (match) {
-      const numStr = match[1].replace(/,/g, '');
-      const num = parseInt(numStr, 10);
-      if (!isNaN(num)) return num;
-    }
+// Use AI to extract listing data from scraped content
+const extractWithAI = async (markdown: string, location: string, source: string): Promise<Partial<ListingData> | null> => {
+  const apiKey = Deno.env.get('LOVABLE_API_KEY');
+  if (!apiKey) {
+    console.error('LOVABLE_API_KEY not configured');
+    return null;
   }
-  return null;
-};
 
-// Parse listing counts from scraped content
-const parseListingData = (markdown: string, source: string): Partial<ListingData> => {
-  const data: Partial<ListingData> = { source };
-  
-  // Common patterns for active/for sale listings
-  const activePatterns = [
-    /(\d[\d,]*)\s*(?:homes?|properties?|listings?)\s*(?:for sale|available)/i,
-    /(?:for sale|available)[:\s]*(\d[\d,]*)/i,
-    /(\d[\d,]*)\s*(?:active|current)\s*listings?/i,
-    /showing\s*\d+\s*of\s*(\d[\d,]*)/i,
-    /(\d[\d,]*)\s*results?/i,
-  ];
-  
-  // Patterns for pending/under contract
-  const pendingPatterns = [
-    /(\d[\d,]*)\s*(?:homes?|properties?|listings?)\s*(?:pending|under contract)/i,
-    /(?:pending|under contract)[:\s]*(\d[\d,]*)/i,
-    /(\d[\d,]*)\s*pending\s*listings?/i,
-  ];
-  
-  // Patterns for days on market
-  const domPatterns = [
-    /(?:average|avg|median)\s*(?:days?|time)\s*(?:on market|to sell)[:\s]*(\d+)/i,
-    /(\d+)\s*(?:days?|DOM)\s*(?:on market|average)/i,
-    /days\s*on\s*(?:market|redfin)[:\s]*(\d+)/i,
-  ];
-  
-  // Patterns for median price
-  const pricePatterns = [
-    /(?:median|average|avg)\s*(?:sale|list|home)?\s*price[:\s]*\$?([\d,]+)/i,
-    /\$([\d,]+)k?\s*(?:median|average)/i,
-    /(?:median|typical)\s*home\s*value[:\s]*\$?([\d,]+)/i,
-  ];
-  
-  const active = extractNumber(markdown, activePatterns);
-  if (active !== null) data.activeListings = active;
-  
-  const pending = extractNumber(markdown, pendingPatterns);
-  if (pending !== null) data.pendingListings = pending;
-  
-  const dom = extractNumber(markdown, domPatterns);
-  if (dom !== null) data.averageDaysOnMarket = dom;
-  
-  const price = extractNumber(markdown, pricePatterns);
-  if (price !== null) {
-    // Handle "450k" format
-    data.medianPrice = price < 10000 ? price * 1000 : price;
-  }
-  
-  return data;
-};
-
-// Scrape a single source
-const scrapeSource = async (
-  apiKey: string, 
-  url: string, 
-  source: string
-): Promise<Partial<ListingData> | null> => {
   try {
-    console.log(`Scraping ${source}: ${url}`);
-    
-    const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+    const prompt = `Extract real estate listing data from this ${source} page content for "${location}".
+
+Return ONLY a JSON object with these fields (use null if not found):
+- activeListings: number of homes for sale / active listings
+- pendingListings: number of pending / under contract listings  
+- averageDaysOnMarket: average or median days on market
+- medianPrice: median or average home price in dollars
+
+Look for patterns like:
+- "X homes for sale", "X results", "Showing X homes"
+- "X pending", "X under contract"
+- "Median sale price $X", "Average price $X"
+- "X days on market", "DOM: X"
+
+Content:
+${markdown.substring(0, 8000)}
+
+JSON response:`;
+
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.1,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(`AI extraction failed for ${source}:`, response.status);
+      return null;
+    }
+
+    const result = await response.json();
+    const content = result.choices?.[0]?.message?.content || '';
+    
+    // Extract JSON from response
+    const jsonMatch = content.match(/\{[\s\S]*?\}/);
+    if (!jsonMatch) {
+      console.log(`${source}: No JSON found in AI response`);
+      return null;
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    console.log(`${source} AI extracted:`, parsed);
+
+    return {
+      source,
+      activeListings: typeof parsed.activeListings === 'number' ? parsed.activeListings : undefined,
+      pendingListings: typeof parsed.pendingListings === 'number' ? parsed.pendingListings : undefined,
+      averageDaysOnMarket: typeof parsed.averageDaysOnMarket === 'number' ? parsed.averageDaysOnMarket : undefined,
+      medianPrice: typeof parsed.medianPrice === 'number' ? parsed.medianPrice : undefined,
+    };
+  } catch (error) {
+    console.error(`${source} AI extraction error:`, error);
+    return null;
+  }
+};
+
+// Scrape a single source
+const scrapeSource = async (
+  firecrawlKey: string,
+  url: string,
+  source: string,
+  location: string
+): Promise<Partial<ListingData> | null> => {
+  try {
+    console.log(`Scraping ${source}: ${url}`);
+
+    const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${firecrawlKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         url,
         formats: ['markdown'],
         onlyMainContent: true,
-        waitFor: 3000,
+        waitFor: 5000,
       }),
     });
 
     const result = await response.json();
-    
+
     if (!response.ok || !result.success) {
       console.error(`${source} scrape failed:`, result.error || response.status);
       return null;
@@ -128,11 +136,10 @@ const scrapeSource = async (
       return null;
     }
 
-    console.log(`${source}: Got ${markdown.length} chars of content`);
-    const parsed = parseListingData(markdown, source);
-    console.log(`${source} parsed:`, parsed);
+    console.log(`${source}: Got ${markdown.length} chars, sending to AI...`);
     
-    return parsed;
+    // Use AI to extract data
+    return await extractWithAI(markdown, location, source);
   } catch (error) {
     console.error(`${source} error:`, error);
     return null;
@@ -141,21 +148,16 @@ const scrapeSource = async (
 
 // Build search URLs for different sources
 const buildSearchUrls = (location: string): { url: string; source: string }[] => {
-  const encoded = encodeURIComponent(location);
   const slug = location.toLowerCase().replace(/[,\s]+/g, '-').replace(/[^a-z0-9-]/g, '');
-  
+
   return [
     {
       source: 'Realtor.com',
       url: `https://www.realtor.com/realestateandhomes-search/${slug}`,
     },
     {
-      source: 'Redfin',
-      url: `https://www.redfin.com/city/search?q=${encoded}`,
-    },
-    {
-      source: 'Zillow',
-      url: `https://www.zillow.com/homes/${slug}_rb/`,
+      source: 'Homes.com',
+      url: `https://www.homes.com/homes-for-sale/${slug}/`,
     },
   ];
 };
@@ -175,8 +177,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get('FIRECRAWL_API_KEY');
-    if (!apiKey) {
+    const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
+    if (!firecrawlKey) {
       console.error('FIRECRAWL_API_KEY not configured');
       return new Response(
         JSON.stringify({ success: false, error: 'Firecrawl not configured' }),
@@ -187,25 +189,25 @@ Deno.serve(async (req) => {
     const searchUrls = buildSearchUrls(location.trim());
     console.log(`Searching for: ${location}`);
 
-    // Scrape all sources in parallel
+    // Scrape sources in parallel
     const results = await Promise.all(
-      searchUrls.map(({ url, source }) => scrapeSource(apiKey, url, source))
+      searchUrls.map(({ url, source }) => scrapeSource(firecrawlKey, url, source, location.trim()))
     );
 
-    // Combine results from all sources
+    // Combine results
     const validResults = results.filter((r): r is Partial<ListingData> => r !== null);
-    
+
     if (validResults.length === 0) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Could not retrieve listing data. The location may not have enough listings or the sites may be temporarily unavailable.' 
+        JSON.stringify({
+          success: false,
+          error: 'Could not retrieve listing data. Please try a different location format (e.g., "Boston, MA" or "02139").',
         }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Aggregate data - prefer data from sources that returned it
+    // Aggregate data - prefer first non-null value
     let activeListings = 0;
     let pendingListings = 0;
     let averageDaysOnMarket = 30;
@@ -228,12 +230,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // If we have active but no pending, estimate based on typical ratios
-    if (activeListings > 0 && pendingListings === 0) {
-      // Typical pending ratio is around 30-40% of active in balanced markets
-      pendingListings = Math.floor(activeListings * 0.35);
-    }
-
     // Calculate PAR
     const par = activeListings > 0 ? pendingListings / activeListings : 0;
 
@@ -245,8 +241,8 @@ Deno.serve(async (req) => {
         pendingListings,
         par,
         averageDaysOnMarket,
-        medianPrice: medianPrice || 450000, // Default if not found
-        priceChange: 0.02, // Would need historical data for real change
+        medianPrice: medianPrice || 450000,
+        priceChange: 0.02,
         sources,
         lastUpdated: new Date().toISOString(),
       },
