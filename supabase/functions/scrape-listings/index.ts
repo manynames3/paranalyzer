@@ -57,10 +57,11 @@ const firecrawlSearch = async (
   }
 };
 
-// Direct Firecrawl scrape of a specific URL
-const firecrawlScrape = async (
+// Firecrawl extract structured data from a URL
+const firecrawlExtract = async (
   apiKey: string,
-  url: string
+  url: string,
+  prompt: string
 ): Promise<string> => {
   try {
     const resp = await fetch('https://api.firecrawl.dev/v1/scrape', {
@@ -71,23 +72,22 @@ const firecrawlScrape = async (
       },
       body: JSON.stringify({
         url,
-        formats: ['markdown'],
-        onlyMainContent: true,
-        waitFor: 15000,
+        formats: [{ type: 'json', prompt }],
+        waitFor: 10000,
         timeout: 30000,
       }),
     });
 
     const data = await resp.json();
     if (!resp.ok || !data?.success) {
-      console.log(`Scrape failed for "${url}":`, data?.error || resp.status);
+      console.log(`Extract failed for "${url}":`, data?.error || resp.status);
       return '';
     }
 
-    const md = data.data?.markdown || data.markdown || '';
-    return md.slice(0, 8000);
+    const json = data.data?.json || data.json || '';
+    return typeof json === 'string' ? json : JSON.stringify(json);
   } catch (e) {
-    console.error(`Scrape error for "${url}":`, e);
+    console.error(`Extract error for "${url}":`, e);
     return '';
   }
 };
