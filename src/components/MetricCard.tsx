@@ -10,6 +10,7 @@ interface MetricCardProps {
     value: number;
     label: string;
   };
+  estimated?: boolean;
   variant?: 'default' | 'primary' | 'success' | 'warning' | 'destructive';
   className?: string;
   delay?: number;
@@ -21,6 +22,7 @@ export const MetricCard = ({
   subtitle,
   icon,
   trend,
+  estimated,
   variant = 'default',
   className,
   delay = 0,
@@ -56,8 +58,15 @@ export const MetricCard = ({
       </div>
       
       <div className="space-y-1">
-        <div className="text-3xl font-bold tracking-tight text-foreground">
-          {value}
+        <div className="flex items-center gap-2">
+          <div className="text-3xl font-bold tracking-tight text-foreground">
+            {value}
+          </div>
+          {estimated && (
+            <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-warning/15 text-warning border border-warning/25" title="This value is estimated based on available data">
+              Est.
+            </span>
+          )}
         </div>
         {subtitle && (
           <p className="text-sm text-muted-foreground">{subtitle}</p>
