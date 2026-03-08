@@ -13,6 +13,8 @@ export interface MarketData {
   population?: number;
   averageIncome?: number;
   averageHousingPrice?: number;
+  redfinCompeteScore?: number;
+  redfinCompeteLabel?: string;
 }
 
 export interface SearchParams {
