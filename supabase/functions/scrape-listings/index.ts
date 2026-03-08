@@ -257,14 +257,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build Zillow URL slug from location (e.g., "Boston, MA" -> "boston-ma")
-    const zillowSlug = loc
-      .toLowerCase()
-      .replace(/,\s*/g, '-')
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-]/g, '');
-
-    // Run searches in parallel - reduced to 3 for speed, no content scraping
+    // Run optimized parallel searches (3 instead of 5, no content scraping)
     const [listingsSearch, pendingSearch, statsSearch] = await Promise.all([
       // Zillow listings count (default = non-pending)
       firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" homes for sale results`, 3, false),
