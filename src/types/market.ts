@@ -10,6 +10,9 @@ export interface MarketData {
   marketStrength: 'buyers' | 'balanced' | 'sellers';
   lastUpdated: string;
   sources?: string[];
+  population?: number;
+  averageIncome?: number;
+  averageHousingPrice?: number;
 }
 
 export interface SearchParams {
