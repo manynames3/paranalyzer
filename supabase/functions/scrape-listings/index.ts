@@ -57,6 +57,40 @@ const firecrawlSearch = async (
   }
 };
 
+// Direct Firecrawl scrape of a specific URL
+const firecrawlScrape = async (
+  apiKey: string,
+  url: string
+): Promise<string> => {
+  try {
+    const resp = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url,
+        formats: ['markdown'],
+        onlyMainContent: true,
+        waitFor: 3000,
+      }),
+    });
+
+    const data = await resp.json();
+    if (!resp.ok || !data?.success) {
+      console.log(`Scrape failed for "${url}":`, data?.error || resp.status);
+      return '';
+    }
+
+    const md = data.data?.markdown || data.markdown || '';
+    return md.slice(0, 8000);
+  } catch (e) {
+    console.error(`Scrape error for "${url}":`, e);
+    return '';
+  }
+};
+
 // Extract data using AI
 const extractWithAI = async (
   texts: Record<string, string>,
