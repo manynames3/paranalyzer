@@ -14,7 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      market_data_cache: {
+        Row: {
+          active_listings: number
+          average_days_on_market: number
+          created_at: string
+          id: string
+          location: string
+          location_key: string
+          median_price: number
+          par: number
+          pending_listings: number
+          price_change: number
+          sources: string[]
+        }
+        Insert: {
+          active_listings?: number
+          average_days_on_market?: number
+          created_at?: string
+          id?: string
+          location: string
+          location_key: string
+          median_price?: number
+          par?: number
+          pending_listings?: number
+          price_change?: number
+          sources?: string[]
+        }
+        Update: {
+          active_listings?: number
+          average_days_on_market?: number
+          created_at?: string
+          id?: string
+          location?: string
+          location_key?: string
+          median_price?: number
+          par?: number
+          pending_listings?: number
+          price_change?: number
+          sources?: string[]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
