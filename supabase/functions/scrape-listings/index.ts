@@ -199,13 +199,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Run two targeted searches in parallel for speed
-    const [listingsText, statsText] = await Promise.all([
-      firecrawlSearch(firecrawlKey, `${loc} homes for sale active pending under contract listings 2025`, 5),
-      firecrawlSearch(firecrawlKey, `${loc} real estate market statistics median home price days on market 2025`, 5),
+    // Run three targeted searches in parallel — dedicated pending query is critical
+    const [listingsText, pendingText, statsText] = await Promise.all([
+      firecrawlSearch(firecrawlKey, `"${loc}" homes for sale active listings`, 5),
+      firecrawlSearch(firecrawlKey, `"${loc}" pending homes under contract contingent real estate`, 5),
+      firecrawlSearch(firecrawlKey, `"${loc}" housing market median home price days on market statistics`, 5),
     ]);
 
-    const combinedText = [listingsText, statsText].filter(Boolean).join('\n===\n');
+    const combinedText = [listingsText, pendingText, statsText].filter(Boolean).join('\n===\n');
 
     if (!combinedText) {
       return new Response(
