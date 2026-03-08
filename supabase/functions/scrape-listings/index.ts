@@ -73,7 +73,8 @@ const firecrawlScrape = async (
         url,
         formats: ['markdown'],
         onlyMainContent: true,
-        waitFor: 3000,
+        waitFor: 15000,
+        timeout: 30000,
       }),
     });
 
