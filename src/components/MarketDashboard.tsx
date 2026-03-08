@@ -34,6 +34,10 @@ export const MarketDashboard = ({ data }: MarketDashboardProps) => {
     zip: 'ZIP Code',
   };
 
+  const isEstimated = (keyword: string) =>
+    data.sources?.some(s => s.toLowerCase().includes('estimated') && s.toLowerCase().includes(keyword)) ?? false;
+  const anyEstimated = data.sources?.some(s => s.toLowerCase().includes('estimated')) ?? false;
+
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6 animate-fade-in">
       {/* Location Header */}
@@ -59,6 +63,7 @@ export const MarketDashboard = ({ data }: MarketDashboardProps) => {
           value={formatNumber(data.activeListings)}
           subtitle="Currently on market"
           icon={<Home className="w-5 h-5 text-primary" />}
+          estimated={isEstimated('active')}
           delay={200}
         />
         <MetricCard
@@ -67,6 +72,7 @@ export const MarketDashboard = ({ data }: MarketDashboardProps) => {
           subtitle="Under contract"
           icon={<Activity className="w-5 h-5 text-success" />}
           variant="success"
+          estimated={isEstimated('pending')}
           delay={300}
         />
         <MetricCard
