@@ -13,6 +13,8 @@ import {
   DealAnalysisResult,
 } from '@/types/dealcheck';
 
+export type { DealAnalysisResult };
+
 // ── Helpers ──────────────────────────────────────────────────────────
 
 /** Monthly mortgage payment using standard amortization formula */
