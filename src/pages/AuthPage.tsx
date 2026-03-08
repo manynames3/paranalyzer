@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BarChart3, Mail, Lock, User, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { lovable } from '@/integrations/lovable/index';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
