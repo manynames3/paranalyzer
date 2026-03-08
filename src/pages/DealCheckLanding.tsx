@@ -15,6 +15,7 @@ import { fmtCurrency, fmtPercent } from '@/utils/formatters';
 import { SAMPLE_DEALS } from '@/types/dealcheck';
 import { analyzeDeal } from '@/utils/dealCalculations';
 import { getScoreLabel, getScoreColor } from '@/types/dealcheck';
+import QuickAnalyzer from '@/components/QuickAnalyzer';
 
 const DealCheckLanding = () => {
   const sampleResult = analyzeDeal(SAMPLE_DEALS[0]);
@@ -74,6 +75,10 @@ const DealCheckLanding = () => {
         </div>
       </section>
 
+      {/* Quick Analyzer */}
+      <section className="relative container mx-auto px-4 pb-20">
+        <QuickAnalyzer />
+      </section>
       {/* Sample Metrics */}
       <section className="relative container mx-auto px-4 pb-20">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
