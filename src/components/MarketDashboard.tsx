@@ -130,6 +130,22 @@ export const MarketDashboard = ({ data }: MarketDashboardProps) => {
         </div>
       )}
 
+      {/* Redfin Compete Score Section */}
+      {(data.redfinCompeteScore || data.redfinCompeteLabel) && (
+        <div className="flex justify-center">
+          <div className="w-full max-w-md">
+            <MetricCard
+              title="Redfin Compete Score™"
+              value={data.redfinCompeteScore ? `${data.redfinCompeteScore}/100` : 'N/A'}
+              subtitle={data.redfinCompeteLabel || 'Market competitiveness'}
+              icon={<Activity className="w-5 h-5 text-destructive" />}
+              variant="destructive"
+              delay={700}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Insights Section */}
       <div className="glass-card rounded-xl p-6 border border-border/50 animate-fade-in" style={{ animationDelay: '600ms' }}>
         <div className="flex items-center gap-2 mb-4">

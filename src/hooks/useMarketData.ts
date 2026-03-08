@@ -54,6 +54,8 @@ export const useMarketData = () => {
         population: responseData.population,
         averageIncome: responseData.averageIncome,
         averageHousingPrice: responseData.averageHousingPrice,
+        redfinCompeteScore: responseData.redfinCompeteScore,
+        redfinCompeteLabel: responseData.redfinCompeteLabel,
       };
 
       setData(marketData);

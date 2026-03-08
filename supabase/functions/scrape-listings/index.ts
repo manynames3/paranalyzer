@@ -15,6 +15,8 @@ interface ExtractedData {
   population?: number;
   averageIncome?: number;
   averageHousingPrice?: number;
+  redfinCompeteScore?: number;
+  redfinCompeteLabel?: string;
   sources: string[];
 }
 
@@ -145,6 +147,8 @@ Return ONLY valid JSON:
   "population": <city/area population as number, null if unknown>,
   "averageIncome": <median/average household income as number, null if unknown>,
   "averageHousingPrice": <average/median home value as number, null if unknown>,
+  "redfinCompeteScore": <Redfin compete score (0-100), null if unknown>,
+  "redfinCompeteLabel": <Redfin compete label (e.g., "Very Competitive"), null if unknown>,
   "dataSources": ["source1", "source2"]
 }
 
@@ -204,6 +208,8 @@ JSON:`;
       population: toNum(parsed.population),
       averageIncome: toNum(parsed.averageIncome),
       averageHousingPrice: toNum(parsed.averageHousingPrice),
+      redfinCompeteScore: toNum(parsed.redfinCompeteScore),
+      redfinCompeteLabel: parsed.redfinCompeteLabel,
       sources: ((parsed.dataSources || []) as string[]).map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)),
     };
   } catch (error) {
@@ -255,6 +261,11 @@ Deno.serve(async (req) => {
             averageDaysOnMarket: cached.average_days_on_market,
             medianPrice: Number(cached.median_price),
             priceChange: Number(cached.price_change),
+            population: cached.population || null,
+            averageIncome: cached.average_income || null,
+            averageHousingPrice: cached.average_housing_price || null,
+            redfinCompeteScore: cached.redfin_compete_score || null,
+            redfinCompeteLabel: cached.redfin_compete_label || null,
             sources: [...(cached.sources || []), 'Cached'],
             lastUpdated: cached.created_at,
           },
@@ -271,8 +282,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Run optimized parallel searches (4 queries)
-    const [listingsSearch, pendingSearch, statsSearch, demographicsSearch] = await Promise.all([
+    // Run optimized parallel searches (5 queries)
+    const [listingsSearch, pendingSearch, statsSearch, demographicsSearch, redfinSearch] = await Promise.all([
       // Zillow listings count (default = non-pending)
       firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" homes for sale results`, 3, false),
       // Pending + total count
@@ -281,6 +292,8 @@ Deno.serve(async (req) => {
       firecrawlSearch(firecrawlKey, `"${loc}" housing market median home price days on market 2025 2026`, 3, false),
       // Demographics (population, income, housing price)
       firecrawlSearch(firecrawlKey, `"${loc}" population median household income median home value 2024 2025`, 3, false),
+      // Redfin compete score
+      firecrawlSearch(firecrawlKey, `site:redfin.com "${loc}" compete score competitive`, 3, false),
     ]);
 
     const textsForAI: Record<string, string> = {};
@@ -288,8 +301,9 @@ Deno.serve(async (req) => {
     if (pendingSearch) textsForAI['Pending/Under Contract & Total Search'] = pendingSearch;
     if (statsSearch) textsForAI['Market Statistics'] = statsSearch;
     if (demographicsSearch) textsForAI['Demographics & Census Data'] = demographicsSearch;
+    if (redfinSearch) textsForAI['Redfin Compete Score'] = redfinSearch;
 
-    console.log(`Data sources: listings=${listingsSearch.length}, pending=${pendingSearch.length}, stats=${statsSearch.length}, demographics=${demographicsSearch.length}`);
+    console.log(`Data sources: listings=${listingsSearch.length}, pending=${pendingSearch.length}, stats=${statsSearch.length}, demographics=${demographicsSearch.length}, redfin=${redfinSearch.length}`);
 
     if (Object.keys(textsForAI).length === 0) {
       return new Response(
@@ -336,6 +350,8 @@ Deno.serve(async (req) => {
         population: extracted.population || null,
         averageIncome: extracted.averageIncome || null,
         averageHousingPrice: extracted.averageHousingPrice || null,
+        redfinCompeteScore: extracted.redfinCompeteScore || null,
+        redfinCompeteLabel: extracted.redfinCompeteLabel || null,
         sources,
         lastUpdated: new Date().toISOString(),
       },
@@ -353,6 +369,11 @@ Deno.serve(async (req) => {
       average_days_on_market: averageDaysOnMarket,
       median_price: medianPrice || 450000,
       price_change: 0.02,
+      population: extracted.population || null,
+      average_income: extracted.averageIncome || null,
+      average_housing_price: extracted.averageHousingPrice || null,
+      redfin_compete_score: extracted.redfinCompeteScore || null,
+      redfin_compete_label: extracted.redfinCompeteLabel || null,
       sources,
       created_at: new Date().toISOString(),
     }, { onConflict: 'location_key' });
