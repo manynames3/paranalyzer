@@ -51,6 +51,9 @@ export const useMarketData = () => {
         marketStrength: getMarketStrength(responseData.par),
         lastUpdated: responseData.lastUpdated,
         sources: responseData.sources,
+        population: responseData.population,
+        averageIncome: responseData.averageIncome,
+        averageHousingPrice: responseData.averageHousingPrice,
       };
 
       setData(marketData);
