@@ -14,6 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
+      deal_analyses: {
+        Row: {
+          ai_summary: string | null
+          annual_cash_flow: number
+          buy_hold_score: number
+          cap_rate: number
+          cash_on_cash_return: number
+          created_at: string
+          down_payment_percent: number
+          flip_profit_high: number
+          flip_profit_low: number
+          flip_score: number
+          id: string
+          interest_rate: number
+          loan_term_years: number
+          mao: number
+          monthly_cash_flow: number
+          monthly_payment: number
+          overall_score: number
+          property_id: string
+          purchase_price: number
+          rehab_total_high: number
+          rehab_total_low: number
+          total_cash_needed: number
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          annual_cash_flow?: number
+          buy_hold_score?: number
+          cap_rate?: number
+          cash_on_cash_return?: number
+          created_at?: string
+          down_payment_percent?: number
+          flip_profit_high?: number
+          flip_profit_low?: number
+          flip_score?: number
+          id?: string
+          interest_rate?: number
+          loan_term_years?: number
+          mao?: number
+          monthly_cash_flow?: number
+          monthly_payment?: number
+          overall_score?: number
+          property_id: string
+          purchase_price?: number
+          rehab_total_high?: number
+          rehab_total_low?: number
+          total_cash_needed?: number
+          user_id: string
+        }
+        Update: {
+          ai_summary?: string | null
+          annual_cash_flow?: number
+          buy_hold_score?: number
+          cap_rate?: number
+          cash_on_cash_return?: number
+          created_at?: string
+          down_payment_percent?: number
+          flip_profit_high?: number
+          flip_profit_low?: number
+          flip_score?: number
+          id?: string
+          interest_rate?: number
+          loan_term_years?: number
+          mao?: number
+          monthly_cash_flow?: number
+          monthly_payment?: number
+          overall_score?: number
+          property_id?: string
+          purchase_price?: number
+          rehab_total_high?: number
+          rehab_total_low?: number
+          total_cash_needed?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_analyses_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       market_data_cache: {
         Row: {
           active_listings: number
@@ -55,6 +141,210 @@ export type Database = {
           sources?: string[]
         }
         Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          default_capex_percent: number
+          default_closing_buy_percent: number
+          default_closing_sell_percent: number
+          default_down_payment_percent: number
+          default_interest_rate: number
+          default_loan_term_years: number
+          default_management_percent: number
+          default_repairs_percent: number
+          default_vacancy_percent: number
+          email: string | null
+          full_name: string | null
+          id: string
+          mao_multiplier: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_capex_percent?: number
+          default_closing_buy_percent?: number
+          default_closing_sell_percent?: number
+          default_down_payment_percent?: number
+          default_interest_rate?: number
+          default_loan_term_years?: number
+          default_management_percent?: number
+          default_repairs_percent?: number
+          default_vacancy_percent?: number
+          email?: string | null
+          full_name?: string | null
+          id: string
+          mao_multiplier?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_capex_percent?: number
+          default_closing_buy_percent?: number
+          default_closing_sell_percent?: number
+          default_down_payment_percent?: number
+          default_interest_rate?: number
+          default_loan_term_years?: number
+          default_management_percent?: number
+          default_repairs_percent?: number
+          default_vacancy_percent?: number
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          mao_multiplier?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          address: string
+          asking_price: number
+          bathrooms: number
+          bedrooms: number
+          capex_percent: number
+          city: string
+          closing_cost_buy_percent: number
+          closing_cost_sell_percent: number
+          created_at: string
+          down_payment_percent: number
+          estimated_arv: number
+          estimated_monthly_rent: number
+          estimated_rehab_high: number
+          estimated_rehab_low: number
+          hoa_monthly: number
+          holding_months: number
+          id: string
+          insurance_annual: number
+          interest_rate: number
+          loan_term_years: number
+          lot_size: number | null
+          notes: string | null
+          property_management_percent: number
+          property_type: string
+          repairs_percent: number
+          square_feet: number
+          state: string
+          taxes_annual: number
+          updated_at: string
+          user_id: string | null
+          vacancy_percent: number
+          year_built: number | null
+          zip_code: string
+        }
+        Insert: {
+          address: string
+          asking_price?: number
+          bathrooms?: number
+          bedrooms?: number
+          capex_percent?: number
+          city?: string
+          closing_cost_buy_percent?: number
+          closing_cost_sell_percent?: number
+          created_at?: string
+          down_payment_percent?: number
+          estimated_arv?: number
+          estimated_monthly_rent?: number
+          estimated_rehab_high?: number
+          estimated_rehab_low?: number
+          hoa_monthly?: number
+          holding_months?: number
+          id?: string
+          insurance_annual?: number
+          interest_rate?: number
+          loan_term_years?: number
+          lot_size?: number | null
+          notes?: string | null
+          property_management_percent?: number
+          property_type?: string
+          repairs_percent?: number
+          square_feet?: number
+          state?: string
+          taxes_annual?: number
+          updated_at?: string
+          user_id?: string | null
+          vacancy_percent?: number
+          year_built?: number | null
+          zip_code?: string
+        }
+        Update: {
+          address?: string
+          asking_price?: number
+          bathrooms?: number
+          bedrooms?: number
+          capex_percent?: number
+          city?: string
+          closing_cost_buy_percent?: number
+          closing_cost_sell_percent?: number
+          created_at?: string
+          down_payment_percent?: number
+          estimated_arv?: number
+          estimated_monthly_rent?: number
+          estimated_rehab_high?: number
+          estimated_rehab_low?: number
+          hoa_monthly?: number
+          holding_months?: number
+          id?: string
+          insurance_annual?: number
+          interest_rate?: number
+          loan_term_years?: number
+          lot_size?: number | null
+          notes?: string | null
+          property_management_percent?: number
+          property_type?: string
+          repairs_percent?: number
+          square_feet?: number
+          state?: string
+          taxes_annual?: number
+          updated_at?: string
+          user_id?: string | null
+          vacancy_percent?: number
+          year_built?: number | null
+          zip_code?: string
+        }
+        Relationships: []
+      }
+      saved_deals: {
+        Row: {
+          analysis_id: string
+          created_at: string
+          id: string
+          label: string
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          analysis_id: string
+          created_at?: string
+          id?: string
+          label?: string
+          property_id: string
+          user_id: string
+        }
+        Update: {
+          analysis_id?: string
+          created_at?: string
+          id?: string
+          label?: string
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_deals_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "deal_analyses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_deals_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
