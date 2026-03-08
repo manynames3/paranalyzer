@@ -282,12 +282,13 @@ Deno.serve(async (req) => {
     const textsForAI: Record<string, string> = {};
     if (activeSearch) textsForAI['Active Listings Search'] = activeSearch;
     if (pendingSearch) textsForAI['Pending Listings Search'] = pendingSearch;
+    if (pendingZillowSearch) textsForAI['Zillow Pending Search'] = pendingZillowSearch;
     if (redfinSearch) textsForAI['Redfin Market Data'] = redfinSearch;
     if (statsSearch) textsForAI['Market Statistics'] = statsSearch;
     if (zillowAllScrape) textsForAI['Zillow All Listings Page (Direct)'] = zillowAllScrape;
     if (zillowPendingScrape) textsForAI['Zillow Pending Listings Page (Direct)'] = zillowPendingScrape;
 
-    console.log(`Data: active=${activeSearch.length}, pending=${pendingSearch.length}, redfin=${redfinSearch.length}, stats=${statsSearch.length}, zillowAll=${zillowAllScrape.length}, zillowPending=${zillowPendingScrape.length}`);
+    console.log(`Data sources: active=${activeSearch.length}, pending=${pendingSearch.length}, pendingZillow=${pendingZillowSearch.length}, redfin=${redfinSearch.length}, stats=${statsSearch.length}, zillowAll=${zillowAllScrape.length}, zillowPending=${zillowPendingScrape.length}`);
 
     if (Object.keys(textsForAI).length === 0) {
       return new Response(
