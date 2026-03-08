@@ -112,6 +112,8 @@ export type Database = {
           par: number
           pending_listings: number
           price_change: number
+          redfin_compete_label: string | null
+          redfin_compete_score: number | null
           sources: string[]
         }
         Insert: {
@@ -125,6 +127,8 @@ export type Database = {
           par?: number
           pending_listings?: number
           price_change?: number
+          redfin_compete_label?: string | null
+          redfin_compete_score?: number | null
           sources?: string[]
         }
         Update: {
@@ -138,6 +142,8 @@ export type Database = {
           par?: number
           pending_listings?: number
           price_change?: number
+          redfin_compete_label?: string | null
+          redfin_compete_score?: number | null
           sources?: string[]
         }
         Relationships: []
