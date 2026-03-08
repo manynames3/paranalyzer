@@ -53,6 +53,52 @@ const firecrawlSearch = async (
   }
 };
 
+// Scrape a specific URL for pending count
+const scrapePendingCount = async (
+  apiKey: string,
+  location: string
+): Promise<number | null> => {
+  try {
+    const slug = location.toLowerCase().replace(/[,\s]+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const url = `https://www.realtor.com/realestateandhomes-search/${slug}/show-recently-sold-pending`;
+    console.log('Scraping pending page:', url);
+
+    const resp = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url,
+        formats: ['markdown'],
+        onlyMainContent: true,
+        waitFor: 3000,
+      }),
+    });
+
+    const data = await resp.json();
+    if (!resp.ok || !data?.success) return null;
+
+    const md = data.data?.markdown || '';
+    // Look for "X results" or "X homes" pattern
+    const match = md.match(/(?:showing|of|found)\s+([0-9,]+)\s*(?:results|homes|properties|listings)/i)
+      || md.match(/([0-9,]+)\s*(?:results|homes\s+(?:with|recently)|pending)/i);
+
+    if (match) {
+      const n = Number(match[1].replace(/,/g, ''));
+      if (Number.isFinite(n) && n > 0) {
+        console.log(`Scraped pending count: ${n}`);
+        return n;
+      }
+    }
+    return null;
+  } catch (e) {
+    console.error('Pending scrape error:', e);
+    return null;
+  }
+};
+
 // Use AI to extract numbers from combined search results
 const extractWithAI = async (text: string, location: string): Promise<MarketNumbers> => {
   const apiKey = Deno.env.get('LOVABLE_API_KEY');
