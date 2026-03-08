@@ -107,28 +107,31 @@ const extractWithAI = async (
 
   if (!sections) return { sources: [] };
 
-  const prompt = `You are a real estate data extraction expert. Extract listing statistics for "${location}" from these web search results and direct page scrapes.
+  const prompt = `You are a real estate data extraction expert. Extract listing statistics for "${location}" from these web search results.
 
-DEFINITIONS:
-- ACTIVE = homes for sale, NOT pending/under contract  
+CRITICAL DEFINITIONS:
+- On Zillow, the DEFAULT search page shows ONLY non-pending listings (homes actively for sale, NOT under contract)
+- The "all listings" or unfiltered view on Zillow shows TOTAL = non-pending + pending combined
+- ACTIVE (non-pending) = homes for sale that are NOT pending/under contract
 - PENDING = homes under contract / contingent / pending
 - TOTAL = active + pending combined
+- PAR = pending / total (NOT pending / active)
 
 EXTRACTION RULES:
-1. PRIORITY: Direct Zillow page scrapes are the most reliable source. Use them first.
-2. Look for result counts: "X results", "X homes for sale", "Showing 1-40 of X", "X listings", "X agents found" (ignore agent counts)
-3. The "Zillow All Listings Page" typically shows total count (active+pending combined). Look for patterns like "X results" or "X homes for sale"
-4. The "Zillow Pending Listings Page" shows ONLY pending/under-contract homes. Its result count IS the pending count.
-5. If you have total from Zillow All and pending from Zillow Pending: active = total - pending
-6. Redfin shows "X homes for sale" which is usually active-only
+1. Look for result counts like "X results", "X homes for sale", "Showing 1-40 of X", "X listings"
+2. If you find a Zillow default page count, that is the NON-PENDING (active) count
+3. If you find a Zillow "all listings" count or total count, that includes both active and pending
+4. PENDING = total - active (non-pending)
+5. Redfin typically shows active-only counts
+6. If you see both a smaller number and a larger number from the same source, the smaller is likely active-only and the larger is total
 7. Market stats pages show median price, days on market
-8. IMPORTANT: Numbers in the hundreds or thousands are expected for cities. Single-digit pending counts for a major city are almost certainly wrong.
+8. Ignore agent counts
 
 Return ONLY valid JSON:
 {
-  "activeListings": <active-only count, null if unknown>,
-  "pendingListings": <pending count, null if unknown>,
-  "totalListings": <total if available, null otherwise>,
+  "activeListings": <non-pending count (homes for sale, not under contract), null if unknown>,
+  "pendingListings": <pending/under-contract count, null if unknown>,
+  "totalListings": <total including pending, null if unknown>,
   "medianPrice": <median price as number, null if unknown>,
   "daysOnMarket": <median/avg DOM as number, null if unknown>,
   "dataSources": ["source1", "source2"]
