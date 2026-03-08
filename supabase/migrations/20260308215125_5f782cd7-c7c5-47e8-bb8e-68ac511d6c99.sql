@@ -1,0 +1,1 @@
+DELETE FROM market_data_cache WHERE location_key = 'boston, ma';
