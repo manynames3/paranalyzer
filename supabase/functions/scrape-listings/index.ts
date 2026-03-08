@@ -127,6 +127,11 @@ EXTRACTION RULES:
 7. Market stats pages show median price, days on market
 8. Ignore agent counts
 
+DEMOGRAPHIC DATA:
+- Extract population of the city/area if mentioned
+- Extract average/median household income if mentioned
+- Extract average/median home value or housing price if mentioned (this is the overall average, NOT just current listings)
+
 Return ONLY valid JSON:
 {
   "activeListings": <non-pending count (homes for sale, not under contract), null if unknown>,
@@ -134,6 +139,9 @@ Return ONLY valid JSON:
   "totalListings": <total including pending, null if unknown>,
   "medianPrice": <median price as number, null if unknown>,
   "daysOnMarket": <median/avg DOM as number, null if unknown>,
+  "population": <city/area population as number, null if unknown>,
+  "averageIncome": <median/average household income as number, null if unknown>,
+  "averageHousingPrice": <average/median home value as number, null if unknown>,
   "dataSources": ["source1", "source2"]
 }
 
