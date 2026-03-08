@@ -251,16 +251,27 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Run 4 targeted searches in parallel with scrapeOptions for richer content
-    const [activeSearch, pendingSearch, redfinSearch, statsSearch] = await Promise.all([
-      // Active listings count from Zillow/Realtor
-      firecrawlSearch(firecrawlKey, `"${loc}" homes for sale active listings total results zillow realtor`, 5, true),
-      // Pending/under contract counts specifically
-      firecrawlSearch(firecrawlKey, `"${loc}" pending under contract contingent homes listings count zillow realtor redfin`, 5, true),
+    // Build Zillow URL slug from location (e.g., "Boston, MA" -> "boston-ma")
+    const zillowSlug = loc
+      .toLowerCase()
+      .replace(/,\s*/g, '-')
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+
+    // Run searches + direct Zillow scrapes in parallel
+    const [activeSearch, pendingSearch, redfinSearch, statsSearch, zillowAllScrape, zillowPendingScrape] = await Promise.all([
+      // Search: active listings
+      firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" homes for sale`, 5, true),
+      // Search: pending listings specifically
+      firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" pending under contract listings`, 5, true),
       // Redfin housing market data
-      firecrawlSearch(firecrawlKey, `redfin "${loc}" housing market overview homes for sale median price`, 3, true),
+      firecrawlSearch(firecrawlKey, `site:redfin.com "${loc}" housing market homes for sale`, 3, true),
       // Market statistics
-      firecrawlSearch(firecrawlKey, `"${loc}" housing market statistics median home price days on market active pending 2025 2026`, 3, true),
+      firecrawlSearch(firecrawlKey, `"${loc}" housing market statistics median home price days on market 2025 2026`, 3, true),
+      // Direct scrape: Zillow all listings page (shows total count)
+      firecrawlScrape(firecrawlKey, `https://www.zillow.com/${zillowSlug}/`),
+      // Direct scrape: Zillow pending page (shows pending count)
+      firecrawlScrape(firecrawlKey, `https://www.zillow.com/${zillowSlug}/pending/`),
     ]);
 
     const textsForAI: Record<string, string> = {};
@@ -268,8 +279,10 @@ Deno.serve(async (req) => {
     if (pendingSearch) textsForAI['Pending Listings Search'] = pendingSearch;
     if (redfinSearch) textsForAI['Redfin Market Data'] = redfinSearch;
     if (statsSearch) textsForAI['Market Statistics'] = statsSearch;
+    if (zillowAllScrape) textsForAI['Zillow All Listings Page (Direct)'] = zillowAllScrape;
+    if (zillowPendingScrape) textsForAI['Zillow Pending Listings Page (Direct)'] = zillowPendingScrape;
 
-    console.log(`Data: active=${activeSearch.length}, pending=${pendingSearch.length}, redfin=${redfinSearch.length}, stats=${statsSearch.length}`);
+    console.log(`Data: active=${activeSearch.length}, pending=${pendingSearch.length}, redfin=${redfinSearch.length}, stats=${statsSearch.length}, zillowAll=${zillowAllScrape.length}, zillowPending=${zillowPendingScrape.length}`);
 
     if (Object.keys(textsForAI).length === 0) {
       return new Response(
