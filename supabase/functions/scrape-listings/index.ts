@@ -1,7 +1,11 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 interface MarketNumbers {
   activeListings?: number;
@@ -160,7 +164,48 @@ Deno.serve(async (req) => {
     }
 
     const loc = location.trim();
+    const locationKey = loc.toLowerCase().replace(/\s+/g, ' ');
     console.log(`=== Market data request for: ${loc} ===`);
+
+    // Check cache first
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const sb = createClient(supabaseUrl, supabaseKey);
+
+    const { data: cached } = await sb
+      .from('market_data_cache')
+      .select('*')
+      .eq('location_key', locationKey)
+      .single();
+
+    if (cached && (Date.now() - new Date(cached.created_at).getTime()) < CACHE_TTL_MS) {
+      console.log('Cache hit for', locationKey);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            location: cached.location,
+            activeListings: cached.active_listings,
+            pendingListings: cached.pending_listings,
+            par: Number(cached.par),
+            averageDaysOnMarket: cached.average_days_on_market,
+            medianPrice: Number(cached.median_price),
+            priceChange: Number(cached.price_change),
+            sources: [...(cached.sources || []), 'Cached'],
+            lastUpdated: cached.created_at,
+          },
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
+    if (!firecrawlKey) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Firecrawl not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Run two targeted searches in parallel for speed
     const [listingsText, statsText] = await Promise.all([
