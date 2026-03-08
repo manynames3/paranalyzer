@@ -3,7 +3,9 @@ import { MarketDashboard } from '@/components/MarketDashboard';
 import { LoadingState } from '@/components/LoadingState';
 import { EmptyState } from '@/components/EmptyState';
 import { useMarketData } from '@/hooks/useMarketData';
-import { Activity } from 'lucide-react';
+import { Activity, BarChart3, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const { data, isLoading, error, fetchMarketData } = useMarketData();
