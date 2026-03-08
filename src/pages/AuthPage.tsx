@@ -118,6 +118,30 @@ const AuthPage = () => {
             </Button>
           </form>
 
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border/50" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+            </div>
+          </div>
+
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={async () => {
+              const { error } = await lovable.auth.signInWithOAuth('google', {
+                redirect_uri: window.location.origin,
+              });
+              if (error) {
+                toast({ title: 'Google sign-in failed', description: String(error), variant: 'destructive' });
+              }
+            }}
+          >
+            Sign in with Google
+          </Button>
+
           <div className="mt-6 text-center text-sm text-muted-foreground">
             {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
             <button
