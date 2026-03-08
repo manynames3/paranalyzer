@@ -155,14 +155,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
-    if (!firecrawlKey) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Firecrawl not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const loc = location.trim();
     const locationKey = loc.toLowerCase().replace(/\s+/g, ' ');
     console.log(`=== Market data request for: ${loc} ===`);
