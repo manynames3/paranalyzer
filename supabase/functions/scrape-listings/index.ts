@@ -162,11 +162,10 @@ Deno.serve(async (req) => {
     const loc = location.trim();
     console.log(`=== Market data request for: ${loc} ===`);
 
-    // Run multiple targeted searches in parallel for speed
-    const [activeText, pendingText, statsText] = await Promise.all([
-      firecrawlSearch(firecrawlKey, `${loc} homes for sale how many listings`, 5),
-      firecrawlSearch(firecrawlKey, `${loc} pending homes under contract listings`, 5),
-      firecrawlSearch(firecrawlKey, `${loc} real estate market median home price days on market`, 5),
+    // Run two targeted searches in parallel for speed
+    const [listingsText, statsText] = await Promise.all([
+      firecrawlSearch(firecrawlKey, `${loc} homes for sale active pending under contract listings 2025`, 5),
+      firecrawlSearch(firecrawlKey, `${loc} real estate market statistics median home price days on market 2025`, 5),
     ]);
 
     const combinedText = [activeText, pendingText, statsText].filter(Boolean).join('\n===\n');
