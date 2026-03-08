@@ -245,11 +245,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Run three targeted searches in parallel — dedicated pending query is critical
-    const [listingsText, pendingText, statsText] = await Promise.all([
+    // Run searches + pending scrape in parallel
+    const [listingsText, pendingText, statsText, scrapedPending] = await Promise.all([
       firecrawlSearch(firecrawlKey, `"${loc}" homes for sale active listings`, 5),
       firecrawlSearch(firecrawlKey, `"${loc}" pending homes under contract contingent real estate`, 5),
       firecrawlSearch(firecrawlKey, `"${loc}" housing market median home price days on market statistics`, 5),
+      scrapePendingCount(firecrawlKey, loc),
     ]);
 
     const combinedText = [listingsText, pendingText, statsText].filter(Boolean).join('\n===\n');
@@ -264,25 +265,31 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Combined search text: ${combinedText.length} chars`);
+    console.log(`Combined search text: ${combinedText.length} chars, scraped pending: ${scrapedPending}`);
 
     // Extract data with AI
     const extracted = await extractWithAI(combinedText, loc);
 
     let activeListings = extracted.activeListings || 0;
-    let pendingListings = extracted.pendingListings || 0;
+    let pendingListings = extracted.pendingListings || scrapedPending || 0;
     let averageDaysOnMarket = extracted.averageDaysOnMarket || 30;
     let medianPrice = extracted.medianPrice || 0;
 
-    // Estimation fallbacks
+    // Use scraped pending if AI missed it
+    if (scrapedPending && scrapedPending > pendingListings) {
+      pendingListings = scrapedPending;
+    }
+
     const sources: string[] = ['Web Search'];
 
+    // Only estimate as last resort, using more reasonable ratios
     if (activeListings > 0 && pendingListings === 0) {
-      pendingListings = Math.max(1, Math.round(activeListings * 0.08));
+      // Typical US market PAR is 20-40%, use 25% as a reasonable middle
+      pendingListings = Math.max(1, Math.round(activeListings * 0.25));
       sources.push('Estimated (pending)');
     }
     if (pendingListings > 0 && activeListings === 0) {
-      activeListings = Math.max(50, pendingListings * 12);
+      activeListings = Math.max(50, Math.round(pendingListings * 4));
       sources.push('Estimated (active)');
     }
 
