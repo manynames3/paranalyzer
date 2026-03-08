@@ -239,7 +239,7 @@ Deno.serve(async (req) => {
     if (redfinText) textsForAI['Redfin Search Results'] = redfinText;
     if (statsText) textsForAI['Market Statistics'] = statsText;
 
-    console.log(`Search results - Zillow: ${zillowText.length} chars, Redfin: ${redfinText.length} chars, Stats: ${statsText.length} chars`);
+    console.log(`Search results - Zillow active: ${zillowActive.length}, Zillow pending: ${zillowPending.length}, Redfin: ${redfinText.length}, Stats: ${statsText.length} chars`);
 
     if (Object.keys(textsForAI).length === 0) {
       return new Response(
