@@ -225,15 +225,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Run targeted searches in parallel - use site: filters for accuracy
-    const [zillowText, redfinText, statsText] = await Promise.all([
-      firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" homes for sale real estate listings`, 5),
-      firecrawlSearch(firecrawlKey, `site:redfin.com "${loc}" homes for sale pending under contract`, 5),
+    // Run targeted searches in parallel
+    const [zillowActive, zillowPending, redfinText, statsText] = await Promise.all([
+      firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" homes for sale active listings results`, 5),
+      firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" pending under contract listings`, 5),
+      firecrawlSearch(firecrawlKey, `site:redfin.com "${loc}" real estate market homes for sale pending`, 5),
       firecrawlSearch(firecrawlKey, `"${loc}" housing market statistics median home price days on market 2025 2026`, 3),
     ]);
 
     const textsForAI: Record<string, string> = {};
-    if (zillowText) textsForAI['Zillow Search Results'] = zillowText;
+    if (zillowActive) textsForAI['Zillow Active/All Listings'] = zillowActive;
+    if (zillowPending) textsForAI['Zillow Pending/Under Contract'] = zillowPending;
     if (redfinText) textsForAI['Redfin Search Results'] = redfinText;
     if (statsText) textsForAI['Market Statistics'] = statsText;
 
