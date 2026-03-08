@@ -266,6 +266,20 @@ Deno.serve(async (req) => {
 
     console.log('Final result:', JSON.stringify(responseData));
 
+    // Write to cache (upsert)
+    await sb.from('market_data_cache').upsert({
+      location_key: locationKey,
+      location: loc,
+      active_listings: activeListings,
+      pending_listings: pendingListings,
+      par,
+      average_days_on_market: averageDaysOnMarket,
+      median_price: medianPrice || 450000,
+      price_change: 0.02,
+      sources,
+      created_at: new Date().toISOString(),
+    }, { onConflict: 'location_key' });
+
     return new Response(
       JSON.stringify(responseData),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
