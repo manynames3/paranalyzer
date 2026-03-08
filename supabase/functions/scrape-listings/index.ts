@@ -168,7 +168,7 @@ Deno.serve(async (req) => {
       firecrawlSearch(firecrawlKey, `${loc} real estate market statistics median home price days on market 2025`, 5),
     ]);
 
-    const combinedText = [activeText, pendingText, statsText].filter(Boolean).join('\n===\n');
+    const combinedText = [listingsText, statsText].filter(Boolean).join('\n===\n');
 
     if (!combinedText) {
       return new Response(
