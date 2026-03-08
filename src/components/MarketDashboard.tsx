@@ -95,6 +95,41 @@ export const MarketDashboard = ({ data }: MarketDashboardProps) => {
         />
       </div>
 
+      {/* Demographics Section */}
+      {(data.population || data.averageIncome || data.averageHousingPrice) && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {data.population && (
+            <MetricCard
+              title="City Population"
+              value={formatNumber(data.population)}
+              subtitle="Estimated residents"
+              icon={<MapPin className="w-5 h-5 text-primary" />}
+              delay={550}
+            />
+          )}
+          {data.averageIncome && (
+            <MetricCard
+              title="Median Income"
+              value={formatCurrency(data.averageIncome)}
+              subtitle="Household income"
+              icon={<DollarSign className="w-5 h-5 text-success" />}
+              variant="success"
+              delay={600}
+            />
+          )}
+          {data.averageHousingPrice && (
+            <MetricCard
+              title="Median Home Value"
+              value={formatCurrency(data.averageHousingPrice)}
+              subtitle="Overall market value"
+              icon={<TrendingUp className="w-5 h-5 text-warning" />}
+              variant="warning"
+              delay={650}
+            />
+          )}
+        </div>
+      )}
+
       {/* Insights Section */}
       <div className="glass-card rounded-xl p-6 border border-border/50 animate-fade-in" style={{ animationDelay: '600ms' }}>
         <div className="flex items-center gap-2 mb-4">

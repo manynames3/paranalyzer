@@ -12,6 +12,9 @@ interface ExtractedData {
   pendingListings?: number;
   medianPrice?: number;
   daysOnMarket?: number;
+  population?: number;
+  averageIncome?: number;
+  averageHousingPrice?: number;
   sources: string[];
 }
 
@@ -198,6 +201,9 @@ JSON:`;
       pendingListings: pending,
       medianPrice: toNum(parsed.medianPrice),
       daysOnMarket: toNum(parsed.daysOnMarket),
+      population: toNum(parsed.population),
+      averageIncome: toNum(parsed.averageIncome),
+      averageHousingPrice: toNum(parsed.averageHousingPrice),
       sources: ((parsed.dataSources || []) as string[]).map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)),
     };
   } catch (error) {
@@ -265,22 +271,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Run optimized parallel searches (3 instead of 5, no content scraping)
-    const [listingsSearch, pendingSearch, statsSearch] = await Promise.all([
+    // Run optimized parallel searches (4 queries)
+    const [listingsSearch, pendingSearch, statsSearch, demographicsSearch] = await Promise.all([
       // Zillow listings count (default = non-pending)
       firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" homes for sale results`, 3, false),
       // Pending + total count
       firecrawlSearch(firecrawlKey, `"${loc}" pending under contract homes listings 2025 2026 how many total`, 3, false),
       // Market stats (price, DOM)
       firecrawlSearch(firecrawlKey, `"${loc}" housing market median home price days on market 2025 2026`, 3, false),
+      // Demographics (population, income, housing price)
+      firecrawlSearch(firecrawlKey, `"${loc}" population median household income median home value 2024 2025`, 3, false),
     ]);
 
     const textsForAI: Record<string, string> = {};
     if (listingsSearch) textsForAI['Zillow Active (Non-Pending) Listings Search'] = listingsSearch;
     if (pendingSearch) textsForAI['Pending/Under Contract & Total Search'] = pendingSearch;
     if (statsSearch) textsForAI['Market Statistics'] = statsSearch;
+    if (demographicsSearch) textsForAI['Demographics & Census Data'] = demographicsSearch;
 
-    console.log(`Data sources: listings=${listingsSearch.length}, pending=${pendingSearch.length}, stats=${statsSearch.length}`);
+    console.log(`Data sources: listings=${listingsSearch.length}, pending=${pendingSearch.length}, stats=${statsSearch.length}, demographics=${demographicsSearch.length}`);
 
     if (Object.keys(textsForAI).length === 0) {
       return new Response(
@@ -324,6 +333,9 @@ Deno.serve(async (req) => {
         averageDaysOnMarket,
         medianPrice: medianPrice || 450000,
         priceChange: 0.02,
+        population: extracted.population || null,
+        averageIncome: extracted.averageIncome || null,
+        averageHousingPrice: extracted.averageHousingPrice || null,
         sources,
         lastUpdated: new Date().toISOString(),
       },
