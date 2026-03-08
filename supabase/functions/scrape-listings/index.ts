@@ -316,7 +316,8 @@ Deno.serve(async (req) => {
       sources.push('Estimated (active)');
     }
 
-    const par = activeListings > 0 ? pendingListings / activeListings : 0;
+    const totalListings = activeListings + pendingListings;
+    const par = totalListings > 0 ? pendingListings / totalListings : 0;
 
     const responseData = {
       success: true,
