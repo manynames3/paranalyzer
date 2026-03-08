@@ -106,7 +106,7 @@ const extractWithAI = async (
 
   if (!sections) return { sources: [] };
 
-  const prompt = `You are a real estate data extraction expert. Extract listing statistics for "${location}" from these web search results.
+  const prompt = `You are a real estate data extraction expert. Extract listing statistics for "${location}" from these web search results and direct page scrapes.
 
 DEFINITIONS:
 - ACTIVE = homes for sale, NOT pending/under contract  
@@ -114,12 +114,14 @@ DEFINITIONS:
 - TOTAL = active + pending combined
 
 EXTRACTION RULES:
-1. Look for result counts: "X results", "X homes for sale", "Showing 1-40 of X", "X listings"
-2. Zillow "homes for sale" page shows total (active+pending). Zillow pending page shows only pending.
-3. Redfin typically shows "X homes for sale" which may be active-only
-4. Look for "X pending", "X under contract", "X contingent" 
-5. Market stats pages show median price, days on market
-6. If you see total and one of active/pending, calculate the other
+1. PRIORITY: Direct Zillow page scrapes are the most reliable source. Use them first.
+2. Look for result counts: "X results", "X homes for sale", "Showing 1-40 of X", "X listings", "X agents found" (ignore agent counts)
+3. The "Zillow All Listings Page" typically shows total count (active+pending combined). Look for patterns like "X results" or "X homes for sale"
+4. The "Zillow Pending Listings Page" shows ONLY pending/under-contract homes. Its result count IS the pending count.
+5. If you have total from Zillow All and pending from Zillow Pending: active = total - pending
+6. Redfin shows "X homes for sale" which is usually active-only
+7. Market stats pages show median price, days on market
+8. IMPORTANT: Numbers in the hundreds or thousands are expected for cities. Single-digit pending counts for a major city are almost certainly wrong.
 
 Return ONLY valid JSON:
 {
