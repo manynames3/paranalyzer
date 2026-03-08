@@ -18,7 +18,7 @@ const Index = () => {
       <div className="relative">
         {/* Header */}
         <header className="border-b border-border/50 bg-background/80 backdrop-blur-lg sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-4">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
                 <Activity className="w-6 h-6 text-primary" />
@@ -28,6 +28,11 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground">Real Estate Market Intelligence</p>
               </div>
             </div>
+            <Link to="/dealcheck">
+              <Button variant="outline" size="sm" className="gap-2">
+                <BarChart3 className="w-4 h-4" /> DealCheck AI <ArrowRight className="w-3 h-3" />
+              </Button>
+            </Link>
           </div>
         </header>
 
