@@ -59,11 +59,11 @@ export const MarketDashboard = ({ data }: MarketDashboardProps) => {
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          title="Active Listings"
-          value={formatNumber(data.activeListings)}
-          subtitle="Currently on market"
+          title="Total Listings"
+          value={formatNumber(data.activeListings + data.pendingListings)}
+          subtitle="Active + Pending"
           icon={<Home className="w-5 h-5 text-primary" />}
-          estimated={isEstimated('active')}
+          estimated={isEstimated('active') || isEstimated('pending')}
           delay={200}
         />
         <MetricCard

@@ -257,35 +257,22 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build Zillow URL slug from location (e.g., "Boston, MA" -> "boston-ma")
-    const zillowSlug = loc
-      .toLowerCase()
-      .replace(/,\s*/g, '-')
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-]/g, '');
-
-    // Run searches in parallel - focus on getting both active and total counts
-    const [activeSearch, totalSearch, pendingSearch, redfinSearch, statsSearch] = await Promise.all([
-      // Search: Zillow default (non-pending only) listings
-      firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" homes for sale`, 5, true),
-      // Search: Zillow total listings including pending - critical for PAR
-      firecrawlSearch(firecrawlKey, `zillow.com/${zillowSlug} total listings results including pending`, 5, true),
-      // Search: pending/under contract count specifically
-      firecrawlSearch(firecrawlKey, `"${loc}" pending under contract homes listings how many 2025 2026`, 5, true),
-      // Redfin housing market data (includes pending stats)
-      firecrawlSearch(firecrawlKey, `site:redfin.com "${loc}" housing market pending homes for sale`, 3, true),
-      // Market statistics
-      firecrawlSearch(firecrawlKey, `"${loc}" housing market statistics median home price days on market 2025 2026`, 3, true),
+    // Run optimized parallel searches (3 instead of 5, no content scraping)
+    const [listingsSearch, pendingSearch, statsSearch] = await Promise.all([
+      // Zillow listings count (default = non-pending)
+      firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" homes for sale results`, 3, false),
+      // Pending + total count
+      firecrawlSearch(firecrawlKey, `"${loc}" pending under contract homes listings 2025 2026 how many total`, 3, false),
+      // Market stats (price, DOM)
+      firecrawlSearch(firecrawlKey, `"${loc}" housing market median home price days on market 2025 2026`, 3, false),
     ]);
 
     const textsForAI: Record<string, string> = {};
-    if (activeSearch) textsForAI['Zillow Active (Non-Pending) Listings Search'] = activeSearch;
-    if (totalSearch) textsForAI['Zillow Total Listings (Including Pending) Search'] = totalSearch;
-    if (pendingSearch) textsForAI['Pending/Under Contract Search'] = pendingSearch;
-    if (redfinSearch) textsForAI['Redfin Market Data'] = redfinSearch;
+    if (listingsSearch) textsForAI['Zillow Active (Non-Pending) Listings Search'] = listingsSearch;
+    if (pendingSearch) textsForAI['Pending/Under Contract & Total Search'] = pendingSearch;
     if (statsSearch) textsForAI['Market Statistics'] = statsSearch;
 
-    console.log(`Data sources: active=${activeSearch.length}, total=${totalSearch.length}, pending=${pendingSearch.length}, redfin=${redfinSearch.length}, stats=${statsSearch.length}`);
+    console.log(`Data sources: listings=${listingsSearch.length}, pending=${pendingSearch.length}, stats=${statsSearch.length}`);
 
     if (Object.keys(textsForAI).length === 0) {
       return new Response(
