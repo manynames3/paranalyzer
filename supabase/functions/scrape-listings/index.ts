@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 interface ExtractedData {
   activeListings?: number;
@@ -15,7 +15,45 @@ interface ExtractedData {
   sources: string[];
 }
 
-// Use Firecrawl search to find data from specific sites
+// Scrape a URL via Firecrawl
+const scrapePage = async (
+  apiKey: string,
+  url: string,
+  label: string
+): Promise<string> => {
+  try {
+    console.log(`Scraping [${label}]: ${url}`);
+    const resp = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url,
+        formats: ['markdown'],
+        onlyMainContent: true,
+        waitFor: 5000,
+        timeout: 30000,
+      }),
+    });
+
+    const data = await resp.json();
+    if (!resp.ok || !data?.success) {
+      console.log(`Scrape failed [${label}]:`, data?.error || resp.status);
+      return '';
+    }
+
+    const md = data.data?.markdown || '';
+    console.log(`Scrape [${label}]: ${md.length} chars`);
+    return md;
+  } catch (e) {
+    console.error(`Scrape error [${label}]:`, e);
+    return '';
+  }
+};
+
+// Firecrawl search
 const firecrawlSearch = async (
   apiKey: string,
   query: string,
@@ -32,23 +70,25 @@ const firecrawlSearch = async (
     });
 
     const data = await resp.json();
-    if (!resp.ok || !data?.success) {
-      console.log(`Search failed for "${query}":`, data?.error || resp.status);
-      return '';
-    }
+    if (!resp.ok || !data?.success) return '';
 
     const items: any[] = data.data || [];
-    const texts: string[] = [];
-    for (const item of items) {
-      if (item?.markdown) texts.push(item.markdown.slice(0, 3000));
-      if (item?.description) texts.push(String(item.description));
-      if (item?.title) texts.push(String(item.title));
-    }
-    return texts.join('\n---\n');
+    return items.map((item: any) => {
+      const parts: string[] = [];
+      if (item?.title) parts.push(item.title);
+      if (item?.description) parts.push(item.description);
+      if (item?.markdown) parts.push(item.markdown.slice(0, 3000));
+      return parts.join('\n');
+    }).join('\n---\n');
   } catch (e) {
-    console.error(`Search error for "${query}":`, e);
     return '';
   }
+};
+
+// Build Zillow slug
+const toZillowSlug = (location: string): string => {
+  return location.trim().toLowerCase()
+    .replace(/,\s*/g, '-').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 };
 
 // Extract data using AI
@@ -61,42 +101,36 @@ const extractWithAI = async (
 
   const sections = Object.entries(texts)
     .filter(([, text]) => text.length > 0)
-    .map(([label, text]) => `=== ${label} ===\n${text.slice(0, 5000)}`)
+    .map(([label, text]) => `=== ${label} ===\n${text.slice(0, 6000)}`)
     .join('\n\n');
 
   if (!sections) return { sources: [] };
 
-  const prompt = `You are a real estate data extraction expert. Extract listing statistics for "${location}" from these search results.
+  const prompt = `You are a real estate data extraction expert. Extract listing statistics for "${location}" from these scraped pages.
 
-CRITICAL DEFINITIONS:
-- "Active listings" = homes currently FOR SALE that are NOT pending/under contract
-- "Pending listings" = homes that are under contract / pending sale
-- "Total listings" on Zillow includes BOTH active AND pending
-- So: pending = total - active (if you have both numbers)
+CRITICAL RULES:
+1. ACTIVE LISTINGS = homes currently for sale, NOT pending/under contract
+2. PENDING LISTINGS = homes under contract / contingent / pending
+3. On Zillow, the main page shows ALL listings (active + pending combined)
+4. On Zillow, the /pending/ page shows ONLY pending listings
+5. If you have total and active, calculate: pending = total - active
+6. If you have total and pending, calculate: active = total - pending
+7. Redfin market pages often show "homes for sale" (active), pending counts, median price, and days on market
+8. Look for numbers like "X results", "X homes", "Showing 1-40 of X"
 
-Look for patterns like:
-- Zillow: "X results" on main page (= total), "X homes for sale" 
-- Redfin: "X homes for sale", "X pending"
-- "median listing home price $X", "median sale price $X"
-- "X days on market", "median DOM X"
-- Result counts like "1-40 of X results"
-
-When you see Zillow data:
-- The main search page count is TOTAL (active + pending)
-- If you see a separate active-only or pending-only count, use those
-- Common: Zillow shows ~2000 total and ~1200 active for a city like Boston
+IMPORTANT: On the Zillow pending page, the result count IS the pending count. Don't confuse it with active listings.
 
 Return ONLY valid JSON:
 {
-  "activeListings": <number of active/for-sale listings NOT including pending, or null>,
-  "pendingListings": <number of pending/under-contract listings, or null>,
-  "totalListings": <total if available, used to calculate the other if one is missing>,
-  "medianPrice": <median home price as number, no $ or commas, or null>,
-  "daysOnMarket": <average/median days on market, or null>,
-  "dataSources": ["zillow", "redfin", etc - which sites provided the numbers]
+  "activeListings": <active-only count, or null>,
+  "pendingListings": <pending-only count, or null>,
+  "totalListings": <total including both, if visible, or null>,
+  "medianPrice": <median price as number, no $ or commas, or null>,
+  "daysOnMarket": <average/median DOM, or null>,
+  "dataSources": ["zillow", "redfin", etc]
 }
 
-Search results:
+Pages:
 ${sections}
 
 JSON:`;
@@ -120,10 +154,7 @@ JSON:`;
     const result = await response.json();
     const content = result.choices?.[0]?.message?.content || '';
     const jsonMatch = content.match(/\{[\s\S]*?\}/);
-    if (!jsonMatch) {
-      console.log('No JSON in AI response:', content.slice(0, 300));
-      return { sources: [] };
-    }
+    if (!jsonMatch) return { sources: [] };
 
     const parsed = JSON.parse(jsonMatch[0]);
     console.log('AI extracted:', parsed);
@@ -142,13 +173,9 @@ JSON:`;
     let pending = toNum(parsed.pendingListings);
     const total = toNum(parsed.totalListings);
 
-    // Calculate missing value from total if possible
     if (total) {
       if (active && !pending) pending = total - active;
       if (pending && !active) active = total - pending;
-      if (!active && !pending) {
-        // If we only have total, we can't split - leave both undefined
-      }
     }
 
     const sources = (parsed.dataSources as string[]) || [];
@@ -225,21 +252,27 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Run targeted searches in parallel
-    const [zillowActive, zillowPending, redfinText, statsText] = await Promise.all([
-      firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" homes for sale active listings results`, 5),
-      firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" pending under contract listings`, 5),
-      firecrawlSearch(firecrawlKey, `site:redfin.com "${loc}" real estate market homes for sale pending`, 5),
-      firecrawlSearch(firecrawlKey, `"${loc}" housing market statistics median home price days on market 2025 2026`, 3),
+    const slug = toZillowSlug(loc);
+
+    // Strategy: scrape Zillow pending page (reliable) + search for active count + Redfin stats search
+    const [zillowPending, zillowSearch, redfinSearch, statsSearch] = await Promise.all([
+      // Direct scrape of Zillow pending page - this reliably gets pending count
+      scrapePage(firecrawlKey, `https://www.zillow.com/${slug}/pending/`, 'zillow-pending'),
+      // Search for Zillow active listing count
+      firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" homes for sale results`, 3),
+      // Search for Redfin data
+      firecrawlSearch(firecrawlKey, `site:redfin.com "${loc}" housing market homes for sale median price days on market`, 5),
+      // General market stats
+      firecrawlSearch(firecrawlKey, `"${loc}" real estate market statistics active listings median price days on market 2025`, 3),
     ]);
 
     const textsForAI: Record<string, string> = {};
-    if (zillowActive) textsForAI['Zillow Active/All Listings'] = zillowActive;
-    if (zillowPending) textsForAI['Zillow Pending/Under Contract'] = zillowPending;
-    if (redfinText) textsForAI['Redfin Search Results'] = redfinText;
-    if (statsText) textsForAI['Market Statistics'] = statsText;
+    if (zillowPending) textsForAI['Zillow Pending Listings Page (result count = pending count)'] = zillowPending;
+    if (zillowSearch) textsForAI['Zillow Search Snippets'] = zillowSearch;
+    if (redfinSearch) textsForAI['Redfin Search Snippets'] = redfinSearch;
+    if (statsSearch) textsForAI['Market Statistics'] = statsSearch;
 
-    console.log(`Search results - Zillow active: ${zillowActive.length}, Zillow pending: ${zillowPending.length}, Redfin: ${redfinText.length}, Stats: ${statsText.length} chars`);
+    console.log(`Data collected - Zillow pending page: ${zillowPending.length}, Zillow search: ${zillowSearch.length}, Redfin: ${redfinSearch.length}, Stats: ${statsSearch.length}`);
 
     if (Object.keys(textsForAI).length === 0) {
       return new Response(
@@ -260,7 +293,7 @@ Deno.serve(async (req) => {
 
     const sources: string[] = extracted.sources.length > 0 ? extracted.sources : ['Web Search'];
 
-    // Estimate only as absolute last resort
+    // Estimate only as last resort
     if (activeListings > 0 && pendingListings === 0) {
       pendingListings = Math.max(1, Math.round(activeListings * 0.25));
       sources.push('Estimated (pending)');
