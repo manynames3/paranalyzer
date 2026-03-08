@@ -264,34 +264,28 @@ Deno.serve(async (req) => {
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '');
 
-    // Run searches + direct Zillow scrapes in parallel
-    const [activeSearch, pendingSearch, pendingZillowSearch, redfinSearch, statsSearch, zillowAllScrape, zillowPendingScrape] = await Promise.all([
-      // Search: active listings on Zillow
-      firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" homes for sale active listings`, 5, true),
-      // Search: pending listings specifically
-      firecrawlSearch(firecrawlKey, `"${loc}" pending listings under contract how many homes`, 5, true),
-      // Search: Zillow pending page specifically
-      firecrawlSearch(firecrawlKey, `site:zillow.com/${zillowSlug} pending`, 3, true),
-      // Redfin housing market data
-      firecrawlSearch(firecrawlKey, `site:redfin.com "${loc}" housing market homes for sale pending`, 3, true),
+    // Run searches in parallel - focus on getting both active and total counts
+    const [activeSearch, totalSearch, pendingSearch, redfinSearch, statsSearch] = await Promise.all([
+      // Search: Zillow default (non-pending only) listings
+      firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" homes for sale`, 5, true),
+      // Search: Zillow total listings including pending - critical for PAR
+      firecrawlSearch(firecrawlKey, `zillow.com/${zillowSlug} total listings results including pending`, 5, true),
+      // Search: pending/under contract count specifically
+      firecrawlSearch(firecrawlKey, `"${loc}" pending under contract homes listings how many 2025 2026`, 5, true),
+      // Redfin housing market data (includes pending stats)
+      firecrawlSearch(firecrawlKey, `site:redfin.com "${loc}" housing market pending homes for sale`, 3, true),
       // Market statistics
       firecrawlSearch(firecrawlKey, `"${loc}" housing market statistics median home price days on market 2025 2026`, 3, true),
-      // Direct scrape: Zillow all listings page
-      firecrawlScrape(firecrawlKey, `https://www.zillow.com/${zillowSlug}/`),
-      // Direct scrape: Zillow pending page
-      firecrawlScrape(firecrawlKey, `https://www.zillow.com/${zillowSlug}/pending/`),
     ]);
 
     const textsForAI: Record<string, string> = {};
-    if (activeSearch) textsForAI['Active Listings Search'] = activeSearch;
-    if (pendingSearch) textsForAI['Pending Listings Search'] = pendingSearch;
-    if (pendingZillowSearch) textsForAI['Zillow Pending Search'] = pendingZillowSearch;
+    if (activeSearch) textsForAI['Zillow Active (Non-Pending) Listings Search'] = activeSearch;
+    if (totalSearch) textsForAI['Zillow Total Listings (Including Pending) Search'] = totalSearch;
+    if (pendingSearch) textsForAI['Pending/Under Contract Search'] = pendingSearch;
     if (redfinSearch) textsForAI['Redfin Market Data'] = redfinSearch;
     if (statsSearch) textsForAI['Market Statistics'] = statsSearch;
-    if (zillowAllScrape) textsForAI['Zillow All Listings Page (Direct)'] = zillowAllScrape;
-    if (zillowPendingScrape) textsForAI['Zillow Pending Listings Page (Direct)'] = zillowPendingScrape;
 
-    console.log(`Data sources: active=${activeSearch.length}, pending=${pendingSearch.length}, pendingZillow=${pendingZillowSearch.length}, redfin=${redfinSearch.length}, stats=${statsSearch.length}, zillowAll=${zillowAllScrape.length}, zillowPending=${zillowPendingScrape.length}`);
+    console.log(`Data sources: active=${activeSearch.length}, total=${totalSearch.length}, pending=${pendingSearch.length}, redfin=${redfinSearch.length}, stats=${statsSearch.length}`);
 
     if (Object.keys(textsForAI).length === 0) {
       return new Response(
