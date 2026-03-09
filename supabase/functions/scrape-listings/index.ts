@@ -17,6 +17,8 @@ interface ExtractedData {
   averageHousingPrice?: number;
   redfinCompeteScore?: number;
   redfinCompeteLabel?: string;
+  zillowHeatScore?: number;
+  zillowHeatLabel?: string;
   sources: string[];
 }
 
@@ -137,6 +139,11 @@ DEMOGRAPHIC DATA:
 - Extract average/median household income if mentioned
 - Extract average/median home value or housing price if mentioned (this is the overall average, NOT just current listings)
 
+ZILLOW MARKET HEAT INDEX:
+- Zillow's Market Heat Index is a score from 0-10 measuring market competitiveness
+- Look for phrases like "market heat index", "market temperature", "hot market", "cold market"
+- Labels include: "Very Cold" (0-2), "Cold" (2-4), "Neutral" (4-6), "Hot" (6-8), "Very Hot" (8-10)
+
 Return ONLY valid JSON:
 {
   "activeListings": <non-pending count (homes for sale, not under contract), null if unknown>,
@@ -149,6 +156,8 @@ Return ONLY valid JSON:
   "averageHousingPrice": <average/median home value as number, null if unknown>,
   "redfinCompeteScore": <Redfin compete score (0-100), null if unknown>,
   "redfinCompeteLabel": <Redfin compete label (e.g., "Very Competitive"), null if unknown>,
+  "zillowHeatScore": <Zillow market heat index (0-10), null if unknown>,
+  "zillowHeatLabel": <Zillow heat label (e.g., "Very Hot", "Hot", "Neutral", "Cold"), null if unknown>,
   "dataSources": ["source1", "source2"]
 }
 
@@ -210,6 +219,8 @@ JSON:`;
       averageHousingPrice: toNum(parsed.averageHousingPrice),
       redfinCompeteScore: toNum(parsed.redfinCompeteScore),
       redfinCompeteLabel: parsed.redfinCompeteLabel,
+      zillowHeatScore: toNum(parsed.zillowHeatScore),
+      zillowHeatLabel: parsed.zillowHeatLabel,
       sources: ((parsed.dataSources || []) as string[]).map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)),
     };
   } catch (error) {
@@ -266,6 +277,8 @@ Deno.serve(async (req) => {
             averageHousingPrice: cached.average_housing_price || null,
             redfinCompeteScore: cached.redfin_compete_score || null,
             redfinCompeteLabel: cached.redfin_compete_label || null,
+            zillowHeatScore: cached.zillow_heat_score || null,
+            zillowHeatLabel: cached.zillow_heat_label || null,
             sources: [...(cached.sources || []), 'Cached'],
             lastUpdated: cached.created_at,
           },
@@ -282,8 +295,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Run optimized parallel searches (5 queries)
-    const [listingsSearch, pendingSearch, statsSearch, demographicsSearch, redfinSearch] = await Promise.all([
+    // Run optimized parallel searches (6 queries)
+    const [listingsSearch, pendingSearch, statsSearch, demographicsSearch, redfinSearch, zillowHeatSearch] = await Promise.all([
       // Zillow listings count (default = non-pending)
       firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" homes for sale results`, 3, false),
       // Pending + total count
@@ -294,6 +307,8 @@ Deno.serve(async (req) => {
       firecrawlSearch(firecrawlKey, `"${loc}" population median household income median home value 2024 2025`, 3, false),
       // Redfin compete score
       firecrawlSearch(firecrawlKey, `site:redfin.com "${loc}" compete score competitive`, 3, false),
+      // Zillow Market Heat Index
+      firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" market heat index temperature hot cold`, 3, false),
     ]);
 
     const textsForAI: Record<string, string> = {};
@@ -302,8 +317,9 @@ Deno.serve(async (req) => {
     if (statsSearch) textsForAI['Market Statistics'] = statsSearch;
     if (demographicsSearch) textsForAI['Demographics & Census Data'] = demographicsSearch;
     if (redfinSearch) textsForAI['Redfin Compete Score'] = redfinSearch;
+    if (zillowHeatSearch) textsForAI['Zillow Market Heat Index'] = zillowHeatSearch;
 
-    console.log(`Data sources: listings=${listingsSearch.length}, pending=${pendingSearch.length}, stats=${statsSearch.length}, demographics=${demographicsSearch.length}, redfin=${redfinSearch.length}`);
+    console.log(`Data sources: listings=${listingsSearch.length}, pending=${pendingSearch.length}, stats=${statsSearch.length}, demographics=${demographicsSearch.length}, redfin=${redfinSearch.length}, zillowHeat=${zillowHeatSearch.length}`);
 
     if (Object.keys(textsForAI).length === 0) {
       return new Response(
@@ -352,6 +368,8 @@ Deno.serve(async (req) => {
         averageHousingPrice: extracted.averageHousingPrice || null,
         redfinCompeteScore: extracted.redfinCompeteScore || null,
         redfinCompeteLabel: extracted.redfinCompeteLabel || null,
+        zillowHeatScore: extracted.zillowHeatScore || null,
+        zillowHeatLabel: extracted.zillowHeatLabel || null,
         sources,
         lastUpdated: new Date().toISOString(),
       },
@@ -374,6 +392,8 @@ Deno.serve(async (req) => {
       average_housing_price: extracted.averageHousingPrice || null,
       redfin_compete_score: extracted.redfinCompeteScore || null,
       redfin_compete_label: extracted.redfinCompeteLabel || null,
+      zillow_heat_score: extracted.zillowHeatScore || null,
+      zillow_heat_label: extracted.zillowHeatLabel || null,
       sources,
       created_at: new Date().toISOString(),
     }, { onConflict: 'location_key' });

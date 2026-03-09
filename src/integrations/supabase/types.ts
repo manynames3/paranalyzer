@@ -115,6 +115,8 @@ export type Database = {
           redfin_compete_label: string | null
           redfin_compete_score: number | null
           sources: string[]
+          zillow_heat_label: string | null
+          zillow_heat_score: number | null
         }
         Insert: {
           active_listings?: number
@@ -130,6 +132,8 @@ export type Database = {
           redfin_compete_label?: string | null
           redfin_compete_score?: number | null
           sources?: string[]
+          zillow_heat_label?: string | null
+          zillow_heat_score?: number | null
         }
         Update: {
           active_listings?: number
@@ -145,6 +149,8 @@ export type Database = {
           redfin_compete_label?: string | null
           redfin_compete_score?: number | null
           sources?: string[]
+          zillow_heat_label?: string | null
+          zillow_heat_score?: number | null
         }
         Relationships: []
       }

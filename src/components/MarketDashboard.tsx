@@ -130,10 +130,10 @@ export const MarketDashboard = ({ data }: MarketDashboardProps) => {
         </div>
       )}
 
-      {/* Redfin Compete Score Section */}
-      {(data.redfinCompeteScore || data.redfinCompeteLabel) && (
-        <div className="flex justify-center">
-          <div className="w-full max-w-md">
+      {/* Market Competition Scores Section */}
+      {(data.redfinCompeteScore || data.redfinCompeteLabel || data.zillowHeatScore || data.zillowHeatLabel) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {(data.redfinCompeteScore || data.redfinCompeteLabel) && (
             <MetricCard
               title="Redfin Compete Score™"
               value={data.redfinCompeteScore ? `${data.redfinCompeteScore}/100` : 'N/A'}
@@ -142,7 +142,17 @@ export const MarketDashboard = ({ data }: MarketDashboardProps) => {
               variant="destructive"
               delay={700}
             />
-          </div>
+          )}
+          {(data.zillowHeatScore || data.zillowHeatLabel) && (
+            <MetricCard
+              title="Zillow Market Heat Index"
+              value={data.zillowHeatScore ? `${data.zillowHeatScore}/10` : 'N/A'}
+              subtitle={data.zillowHeatLabel || 'Market temperature'}
+              icon={<TrendingUp className="w-5 h-5 text-warning" />}
+              variant="warning"
+              delay={750}
+            />
+          )}
         </div>
       )}
 
