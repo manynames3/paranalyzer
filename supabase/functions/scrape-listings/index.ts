@@ -307,8 +307,8 @@ Deno.serve(async (req) => {
       firecrawlSearch(firecrawlKey, `"${loc}" population median household income median home value 2024 2025`, 3, false),
       // Redfin compete score
       firecrawlSearch(firecrawlKey, `site:redfin.com "${loc}" compete score competitive`, 3, false),
-      // Zillow Market Heat Index
-      firecrawlSearch(firecrawlKey, `site:zillow.com "${loc}" market heat index temperature hot cold`, 3, false),
+      // Zillow Market Heat Index - broader search since site:zillow.com often returns nothing
+      firecrawlSearch(firecrawlKey, `zillow "${loc}" market heat index score housing market overview`, 3, true),
     ]);
 
     const textsForAI: Record<string, string> = {};

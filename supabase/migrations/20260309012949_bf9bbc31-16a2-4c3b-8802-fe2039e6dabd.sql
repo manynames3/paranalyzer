@@ -1,0 +1,1 @@
+DELETE FROM market_data_cache WHERE zillow_heat_score IS NULL;
