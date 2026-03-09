@@ -15,6 +15,9 @@ export interface MarketData {
   averageHousingPrice?: number;
   redfinCompeteScore?: number;
   redfinCompeteLabel?: string;
+  zillowHeatScore?: number;
+  zillowHeatLabel?: string;
+  redfinCompeteLabel?: string;
 }
 
 export interface SearchParams {
