@@ -56,6 +56,8 @@ export const useMarketData = () => {
         averageHousingPrice: responseData.averageHousingPrice,
         redfinCompeteScore: responseData.redfinCompeteScore,
         redfinCompeteLabel: responseData.redfinCompeteLabel,
+        zillowHeatScore: responseData.zillowHeatScore,
+        zillowHeatLabel: responseData.zillowHeatLabel,
       };
 
       setData(marketData);
