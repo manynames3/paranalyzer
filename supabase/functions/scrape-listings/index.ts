@@ -295,6 +295,9 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Format location for Zillow URL (e.g., "Duluth, GA" -> "duluth-ga")
+    const zillowSlug = loc.toLowerCase().replace(/,?\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    
     // Run optimized parallel searches (6 queries)
     const [listingsSearch, pendingSearch, statsSearch, demographicsSearch, redfinSearch, zillowHeatSearch] = await Promise.all([
       // Zillow listings count (default = non-pending)
@@ -307,8 +310,9 @@ Deno.serve(async (req) => {
       firecrawlSearch(firecrawlKey, `"${loc}" population median household income median home value 2024 2025`, 3, false),
       // Redfin compete score
       firecrawlSearch(firecrawlKey, `site:redfin.com "${loc}" compete score competitive`, 3, false),
-      // Zillow Market Heat Index - broader search since site:zillow.com often returns nothing
-      firecrawlSearch(firecrawlKey, `zillow "${loc}" market heat index score housing market overview`, 3, true),
+      // Zillow housing market overview page - try direct scrape
+      firecrawlExtract(firecrawlKey, `https://www.zillow.com/${zillowSlug}/home-values/`, 
+        'Extract the Market Heat Index or market temperature score (0-10 scale or descriptive like Hot, Cold, Very Hot). Also extract any market overview statistics.'),
     ]);
 
     const textsForAI: Record<string, string> = {};
