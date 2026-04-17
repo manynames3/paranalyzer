@@ -1,73 +1,60 @@
-# Welcome to your Lovable project
+🏠 Paranalyzer
+Advanced Real Estate Investment Analysis & Market Intelligence
 
-## Project info
+Paranalyzer is a high-performance web application designed for real estate investors and salespersons to analyze property deals and track market trends with precision. It moves beyond simple spreadsheets by integrating AI-driven deal analysis and real-time market data.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+🚀 Key Features
+DealCheck AI: Leverage AI to instantly evaluate the viability of a flip or rental property based on current market metrics.
 
-## How can I edit this code?
+Zillow Market Heat Index: Visual representation of market competitiveness and inventory levels directly integrated via Zillow data.
 
-There are several ways of editing your application.
+Professional Financial Modeling: Calculate ROI, IRR, and cash-on-cash returns for complex residential developments.
 
-**Use Lovable**
+Market Data Caching: High-speed data retrieval with a built-in Supabase cache management system for seamless performance.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+🛠️ Tech Stack
+This project is built with a modern, type-safe frontend architecture:
 
-Changes made via Lovable will be committed automatically to this repo.
+Framework: React + Vite
 
-**Use your preferred IDE**
+Language: TypeScript
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Styling: Tailwind CSS + shadcn/ui
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Backend/Database: Supabase (PostgreSQL)
 
-Follow these steps:
+Package Manager: Bun
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+🛠️ Local Development
+1. Clone & Install
+Bash
+git clone https://github.com/manynames3/paranalyzer.git
+cd paranalyzer
+bun install
+2. Environment Setup
+Create a .env file in the root directory and add your credentials:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Code snippet
+VITE_SUPABASE_URL=your_project_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+# Add other API keys for Zillow/DealCheck AI here
+3. Start Developing
+Bash
+bun run dev
+🌐 Deployment
+This project is optimized for deployment on Netlify or Vercel.
 
-# Step 3: Install the necessary dependencies.
-npm i
+Build Command: npm run build
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Publish Directory: dist
 
-**Edit a file directly in GitHub**
+📈 Project Roadmap
+[x] Integrate Zillow Market Heat Index
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+[x] Implement DealCheck AI Analysis
 
-**Use GitHub Codespaces**
+[ ] Add Luxury Single-Family Development templates (Somerville/Boston area)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+[ ] Exportable PDF reports for clients/brokers
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Note: This project is part of a professional real estate toolkit. For inquiries regarding licensing or custom development, please contact the repository owner.
