@@ -1,60 +1,84 @@
-🏠 Paranalyzer
-Advanced Real Estate Investment Analysis & Market Intelligence
+# 🏠 Paranalyzer
 
-Paranalyzer is a high-performance web application designed for real estate investors and salespersons to analyze property deals and track market trends with precision. It moves beyond simple spreadsheets by integrating AI-driven deal analysis and real-time market data.
+**Advanced real estate investment analysis and market intelligence**
 
-🚀 Key Features
-DealCheck AI: Leverage AI to instantly evaluate the viability of a flip or rental property based on current market metrics.
+Paranalyzer is a high-performance web app built for real estate investors and sales professionals who need fast, reliable property analysis and market insight. It goes beyond spreadsheets by combining AI-powered deal analysis with real-time market data in a modern, responsive interface.
 
-Zillow Market Heat Index: Visual representation of market competitiveness and inventory levels directly integrated via Zillow data.
+## 🚀 Features
 
-Professional Financial Modeling: Calculate ROI, IRR, and cash-on-cash returns for complex residential developments.
+### DealCheck AI
+Instantly evaluate flip and rental opportunities using AI-driven analysis based on current market conditions and property metrics.
 
-Market Data Caching: High-speed data retrieval with a built-in Supabase cache management system for seamless performance.
+### Zillow Market Heat Index
+Track market competitiveness and inventory trends with a visual heat index powered by Zillow data.
 
-🛠️ Tech Stack
-This project is built with a modern, type-safe frontend architecture:
+### Professional Financial Modeling
+Run advanced investment calculations including:
 
-Framework: React + Vite
+- ROI
+- IRR
+- Cash-on-cash return
 
-Language: TypeScript
+Built to support more complex residential deal structures and development scenarios.
 
-Styling: Tailwind CSS + shadcn/ui
+### Market Data Caching
+Improve speed and reliability with integrated Supabase caching for fast market data retrieval and smoother user experience.
 
-Backend/Database: Supabase (PostgreSQL)
+## 🛠 Tech Stack
 
-Package Manager: Bun
+Paranalyzer is built with a modern, type-safe frontend stack:
 
-🛠️ Local Development
-1. Clone & Install
-Bash
+- **Framework:** React + Vite
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS + shadcn/ui
+- **Backend / Database:** Supabase (PostgreSQL)
+- **Package Manager:** Bun
+
+## 🧑‍💻 Local Development
+
+### 1. Clone the repository
+
+```bash
 git clone https://github.com/manynames3/paranalyzer.git
 cd paranalyzer
-bun install
-2. Environment Setup
-Create a .env file in the root directory and add your credentials:
+```
 
-Code snippet
+### 2. Install dependencies
+
+```bash
+bun install
+```
+
+### 3. Set up environment variables
+
+Create a `.env` file in the project root and add your credentials:
+
+```env
 VITE_SUPABASE_URL=your_project_url
 VITE_SUPABASE_ANON_KEY=your_anon_key
-# Add other API keys for Zillow/DealCheck AI here
-3. Start Developing
-Bash
+# Add other API keys for Zillow / DealCheck AI here
+```
+
+### 4. Start the development server
+
+```bash
 bun run dev
-🌐 Deployment
-This project is optimized for deployment on Netlify or Vercel.
+```
 
-Build Command: npm run build
+## 🌐 Deployment
 
-Publish Directory: dist
+This project is optimized for deployment on **Netlify** or **Vercel**.
 
-📈 Project Roadmap
-[x] Integrate Zillow Market Heat Index
+- **Build command:** `npm run build`
+- **Publish directory:** `dist`
 
-[x] Implement DealCheck AI Analysis
+## 📈 Roadmap
 
-[ ] Add Luxury Single-Family Development templates (Somerville/Boston area)
+- [x] Integrate Zillow Market Heat Index
+- [x] Implement DealCheck AI analysis
+- [ ] Add luxury single-family development templates for the Somerville / Boston market
+- [ ] Support exportable PDF reports for clients and brokers
 
-[ ] Exportable PDF reports for clients/brokers
+## 📌 Notes
 
-Note: This project is part of a professional real estate toolkit. For inquiries regarding licensing or custom development, please contact the repository owner.
+Paranalyzer is part of a professional real estate analysis toolkit. For licensing, partnerships, or custom development inquiries, please contact the repository owner.
