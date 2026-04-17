@@ -72,13 +72,6 @@ This project is optimized for deployment on **Netlify** or **Vercel**.
 - **Build command:** `npm run build`
 - **Publish directory:** `dist`
 
-## 📈 Roadmap
-
-- [x] Integrate Zillow Market Heat Index
-- [x] Implement DealCheck AI analysis
-- [ ] Add luxury single-family development templates for the Somerville / Boston market
-- [ ] Support exportable PDF reports for clients and brokers
-
 ## 📌 Notes
 
 Paranalyzer is part of a professional real estate analysis toolkit. For licensing, partnerships, or custom development inquiries, please contact the repository owner.
