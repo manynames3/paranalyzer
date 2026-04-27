@@ -32,7 +32,7 @@ Paranalyzer is built with a modern, type-safe frontend stack:
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS + shadcn/ui
 - **Backend / Database:** Supabase (PostgreSQL)
-- **Package Manager:** Bun
+- **Package Manager:** npm or Bun
 
 ## 🧑‍💻 Local Development
 
@@ -46,7 +46,7 @@ cd paranalyzer
 ### 2. Install dependencies
 
 ```bash
-bun install
+npm install
 ```
 
 ### 3. Set up environment variables
@@ -55,22 +55,53 @@ Create a `.env` file in the project root and add your credentials:
 
 ```env
 VITE_SUPABASE_URL=your_project_url
-VITE_SUPABASE_ANON_KEY=your_anon_key
-# Add other API keys for Zillow / DealCheck AI here
+VITE_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
 ```
 
 ### 4. Start the development server
 
 ```bash
-bun run dev
+npm run dev
 ```
 
 ## 🌐 Deployment
 
-This project is optimized for deployment on **Netlify** or **Vercel**.
+This project is a good fit for **Cloudflare Pages** with **Supabase** as the backend.
 
 - **Build command:** `npm run build`
 - **Publish directory:** `dist`
+
+### Cloudflare Pages setup
+
+1. Push this repository to GitHub.
+2. In Cloudflare Pages, create a new project and connect the GitHub repository.
+3. Use these build settings:
+   - Framework preset: `Vite`
+   - Build command: `npm run build`
+   - Build output directory: `dist`
+4. Add these environment variables in Cloudflare Pages:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY`
+5. Deploy.
+
+### Supabase settings for the deployed site
+
+After your first deploy, add the Cloudflare Pages URL to your Supabase project:
+
+1. In Supabase, open `Authentication` -> `URL Configuration`.
+2. Set the site URL to your production domain.
+3. Add your Cloudflare Pages production URL and preview URL patterns to the additional redirect URLs list.
+
+This app uses client-side routing, so the included [`public/_redirects`](/Users/aiden/Documents/Codex/2026-04-27/https-github-com-manynames3-paranalyzer-is/repo/public/_redirects) file is required for direct loads on routes like `/dashboard`, `/analyze`, and `/auth`.
+
+### What stays on Supabase
+
+Cloudflare Pages only hosts the frontend bundle. These app features still run through Supabase:
+
+- authentication
+- Postgres data storage
+- saved deals
+- edge functions for market data and AI summaries
 
 ## 📌 Notes
 
