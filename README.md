@@ -84,6 +84,39 @@ This project is a good fit for **Cloudflare Pages** with **Supabase** as the bac
    - `VITE_SUPABASE_PUBLISHABLE_KEY`
 5. Deploy.
 
+### Cloudflare gotcha: Pages vs Worker
+
+Cloudflare bundles **Workers** and **Pages** into the same dashboard tab. That makes it easy to start in the wrong flow.
+
+For this app, you want **Pages**, not **Worker**.
+
+If you are on the wrong screen, Cloudflare will show a Worker-first setup and hide the Pages path in a small footer link:
+
+![Cloudflare Worker create screen with hidden Pages link](docs/screenshots/cloudflare-pages/01-worker-create-screen-hidden-pages-link.png)
+
+The correct switch is the small line at the bottom:
+
+- `Looking to deploy Pages? Get started`
+
+If you chose the correct option, the next screen should say:
+
+- `Get started with Pages. How would you like to begin?`
+
+![Cloudflare Pages get started screen](docs/screenshots/cloudflare-pages/02-pages-get-started-screen.png)
+
+From there, the expected flow is:
+
+1. Import the existing Git repository.
+2. Select `manynames3/paranalyzer`.
+3. Use `npm run build` and `dist`.
+4. Deploy to `*.pages.dev`.
+
+![Cloudflare Pages repository selection for paranalyzer](docs/screenshots/cloudflare-pages/03-pages-select-repository-paranalyzer.png)
+
+![Cloudflare Pages build settings for paranalyzer](docs/screenshots/cloudflare-pages/04-pages-build-settings-paranalyzer.png)
+
+![Cloudflare Pages successful deployment for paranalyzer](docs/screenshots/cloudflare-pages/05-pages-deploy-success-paranalyzer.png)
+
 ### Supabase settings for the deployed site
 
 After your first deploy, add the Cloudflare Pages URL to your Supabase project:
