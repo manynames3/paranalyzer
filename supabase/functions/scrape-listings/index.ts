@@ -22,6 +22,21 @@ interface ExtractedData {
   sources: string[];
 }
 
+const calculatePendingMetrics = (activeListings: number | null, pendingListings: number | null) => {
+  const hasCompleteCounts = activeListings !== null && pendingListings !== null;
+  const totalListings = hasCompleteCounts ? activeListings + pendingListings : null;
+  const pendingToActiveRatio =
+    hasCompleteCounts && activeListings > 0 ? pendingListings / activeListings : null;
+  const pendingShare =
+    totalListings !== null && totalListings > 0 ? pendingListings / totalListings : null;
+
+  return {
+    totalListings,
+    pendingToActiveRatio,
+    pendingShare,
+  };
+};
+
 // Firecrawl search with optional content scraping
 const firecrawlSearch = async (
   apiKey: string,
@@ -261,14 +276,19 @@ Deno.serve(async (req) => {
 
     if (cached && (Date.now() - new Date(cached.created_at).getTime()) < CACHE_TTL_MS) {
       console.log('Cache hit for', locationKey);
+      const activeListings = cached.active_listings;
+      const pendingListings = cached.pending_listings;
+      const { pendingToActiveRatio, pendingShare } = calculatePendingMetrics(activeListings, pendingListings);
+
       return new Response(
         JSON.stringify({
           success: true,
           data: {
             location: cached.location,
-            activeListings: cached.active_listings,
-            pendingListings: cached.pending_listings,
-            par: Number(cached.par),
+            activeListings,
+            pendingListings,
+            pendingToActiveRatio,
+            pendingShare,
             averageDaysOnMarket: cached.average_days_on_market,
             medianPrice: Number(cached.median_price),
             priceChange: Number(cached.price_change),
@@ -337,25 +357,14 @@ Deno.serve(async (req) => {
 
     const extracted = await extractWithAI(textsForAI, loc);
 
-    let activeListings = extracted.activeListings || 0;
-    let pendingListings = extracted.pendingListings || 0;
+    let activeListings = extracted.activeListings ?? null;
+    let pendingListings = extracted.pendingListings ?? null;
     let averageDaysOnMarket = extracted.daysOnMarket || 30;
     let medianPrice = extracted.medianPrice || 0;
 
     const sources: string[] = extracted.sources.length > 0 ? extracted.sources : ['Web Search'];
 
-    // Estimate only as last resort
-    if (activeListings > 0 && pendingListings === 0) {
-      pendingListings = Math.max(1, Math.round(activeListings * 0.25));
-      sources.push('Estimated (pending)');
-    }
-    if (pendingListings > 0 && activeListings === 0) {
-      activeListings = Math.max(50, Math.round(pendingListings * 4));
-      sources.push('Estimated (active)');
-    }
-
-    const totalListings = activeListings + pendingListings;
-    const par = totalListings > 0 ? pendingListings / totalListings : 0;
+    const { pendingToActiveRatio, pendingShare } = calculatePendingMetrics(activeListings, pendingListings);
 
     const responseData = {
       success: true,
@@ -363,7 +372,8 @@ Deno.serve(async (req) => {
         location: loc,
         activeListings,
         pendingListings,
-        par,
+        pendingToActiveRatio,
+        pendingShare,
         averageDaysOnMarket,
         medianPrice: medianPrice || 450000,
         priceChange: 0.02,
@@ -381,26 +391,27 @@ Deno.serve(async (req) => {
 
     console.log('Final result:', JSON.stringify(responseData));
 
-    // Cache
-    await sb.from('market_data_cache').upsert({
-      location_key: locationKey,
-      location: loc,
-      active_listings: activeListings,
-      pending_listings: pendingListings,
-      par,
-      average_days_on_market: averageDaysOnMarket,
-      median_price: medianPrice || 450000,
-      price_change: 0.02,
-      population: extracted.population || null,
-      average_income: extracted.averageIncome || null,
-      average_housing_price: extracted.averageHousingPrice || null,
-      redfin_compete_score: extracted.redfinCompeteScore || null,
-      redfin_compete_label: extracted.redfinCompeteLabel || null,
-      zillow_heat_score: extracted.zillowHeatScore || null,
-      zillow_heat_label: extracted.zillowHeatLabel || null,
-      sources,
-      created_at: new Date().toISOString(),
-    }, { onConflict: 'location_key' });
+    if (activeListings !== null && pendingListings !== null) {
+      await sb.from('market_data_cache').upsert({
+        location_key: locationKey,
+        location: loc,
+        active_listings: activeListings,
+        pending_listings: pendingListings,
+        par: pendingToActiveRatio ?? 0,
+        average_days_on_market: averageDaysOnMarket,
+        median_price: medianPrice || 450000,
+        price_change: 0.02,
+        population: extracted.population || null,
+        average_income: extracted.averageIncome || null,
+        average_housing_price: extracted.averageHousingPrice || null,
+        redfin_compete_score: extracted.redfinCompeteScore || null,
+        redfin_compete_label: extracted.redfinCompeteLabel || null,
+        zillow_heat_score: extracted.zillowHeatScore || null,
+        zillow_heat_label: extracted.zillowHeatLabel || null,
+        sources,
+        created_at: new Date().toISOString(),
+      }, { onConflict: 'location_key' });
+    }
 
     return new Response(
       JSON.stringify(responseData),

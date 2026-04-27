@@ -28,6 +28,10 @@ export const MarketDashboard = ({ data }: MarketDashboardProps) => {
     return new Intl.NumberFormat('en-US').format(value);
   };
 
+  const formatCount = (value: number | null) => {
+    return value === null ? 'N/A' : formatNumber(value);
+  };
+
   const locationTypeLabel = {
     city: 'City',
     county: 'County',
@@ -37,6 +41,10 @@ export const MarketDashboard = ({ data }: MarketDashboardProps) => {
   const isEstimated = (keyword: string) =>
     data.sources?.some(s => s.toLowerCase().includes('estimated') && s.toLowerCase().includes(keyword)) ?? false;
   const anyEstimated = data.sources?.some(s => s.toLowerCase().includes('estimated')) ?? false;
+  const hasCompleteCounts = data.activeListings !== null && data.pendingListings !== null;
+  const totalListings = hasCompleteCounts ? data.activeListings + data.pendingListings : null;
+  const ratioLabel = data.pendingToActiveRatio === null ? 'N/A' : `${data.pendingToActiveRatio.toFixed(2)}x`;
+  const shareLabel = data.pendingShare === null ? 'N/A' : `${(data.pendingShare * 100).toFixed(1)}%`;
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6 animate-fade-in">
@@ -54,13 +62,17 @@ export const MarketDashboard = ({ data }: MarketDashboardProps) => {
       </div>
 
       {/* Main PAR Gauge */}
-      <PARGauge par={data.par} marketStrength={data.marketStrength} />
+      <PARGauge
+        pendingToActiveRatio={data.pendingToActiveRatio}
+        pendingShare={data.pendingShare}
+        marketStrength={data.marketStrength}
+      />
 
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Total Listings"
-          value={formatNumber(data.activeListings + data.pendingListings)}
+          value={totalListings === null ? 'N/A' : formatNumber(totalListings)}
           subtitle="Active + Pending"
           icon={<Home className="w-5 h-5 text-primary" />}
           estimated={isEstimated('active') || isEstimated('pending')}
@@ -68,7 +80,7 @@ export const MarketDashboard = ({ data }: MarketDashboardProps) => {
         />
         <MetricCard
           title="Pending Listings"
-          value={formatNumber(data.pendingListings)}
+          value={formatCount(data.pendingListings)}
           subtitle="Under contract"
           icon={<Activity className="w-5 h-5 text-success" />}
           variant="success"
@@ -164,14 +176,14 @@ export const MarketDashboard = ({ data }: MarketDashboardProps) => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <InsightItem
-            label="Absorption Rate"
-            value={`${(data.pendingListings / data.activeListings * 100).toFixed(1)}%`}
-            description="Rate at which homes are being sold"
+            label="Pending / Active"
+            value={ratioLabel}
+            description="Pending listings divided by active listings"
           />
           <InsightItem
-            label="Inventory Months"
-            value={`${(data.activeListings / (data.pendingListings || 1)).toFixed(1)}`}
-            description="Months of inventory remaining"
+            label="Pending Share"
+            value={shareLabel}
+            description="Pending listings as a share of tracked listings"
           />
           <InsightItem
             label="Market Velocity"

@@ -109,11 +109,14 @@ From there, the expected flow is:
 1. Import the existing Git repository.
 2. Select `manynames3/paranalyzer`.
 3. Use `npm run build` and `dist`.
-4. Deploy to `*.pages.dev`.
+4. Add the `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` build variables in the `Production` environment.
+5. Deploy to `*.pages.dev`.
 
 ![Cloudflare Pages repository selection for paranalyzer](docs/screenshots/cloudflare-pages/03-pages-select-repository-paranalyzer.png)
 
 ![Cloudflare Pages build settings for paranalyzer](docs/screenshots/cloudflare-pages/04-pages-build-settings-paranalyzer.png)
+
+![Cloudflare Pages production environment variables configured](docs/screenshots/cloudflare-pages/06-pages-production-env-vars-configured.png)
 
 ![Cloudflare Pages successful deployment for paranalyzer](docs/screenshots/cloudflare-pages/05-pages-deploy-success-paranalyzer.png)
 
